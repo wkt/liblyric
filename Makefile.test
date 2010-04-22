@@ -1,0 +1,25 @@
+all:test_lyric
+
+source = LyricFunc.c LyricSearch.c   LyricTtSearch.c 
+
+head =  LyricFunc.h LyricSearch.h  LyricTtSearch.h
+
+obj= LyricFunc.o LyricSearch.o LyricTtSearch.o
+
+CFLAGS=`pkg-config --cflags libcurl gio-2.0 gobject-2.0 libxml-2.0 gtk+-2.0` -c -g3
+LDFLAGS=`pkg-config --libs libcurl gio-2.0 gobject-2.0 libxml-2.0 gtk+-2.0` -g3 -lgthread-2.0
+
+test_lyric:$(obj)
+	$(CC) -o $@ $^ $(LDFLAGS) -Wall
+
+LyricFunc.o:LyricFunc.c $(head)
+	$(CC) -o $@ $< $(CFLAGS) -Wall
+
+LyricSearch.o:LyricSearch.c $(head)
+	$(CC) -o $@ $< $(CFLAGS) -Dtest_lyric_search -Wall
+
+LyricTtSearch.o:LyricTtSearch.c $(head)
+	$(CC) -o $@ $< $(CFLAGS) -Wall
+
+clean:
+	rm -rf $(obj) test_lyric
