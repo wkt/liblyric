@@ -40,9 +40,9 @@ typedef enum{
 struct _LyricSearchClass
 {
 	GObjectClass parent_class;
-	void (*lyric_info_change)(LyricSearch *lys);
+	void (*lyric_info_changed)(LyricSearch *lys);
 	void (*lyric_search)(LyricSearch *lys);
-	void (*media_file_change)(LyricSearch *lys,const gchar *mrl);
+	void (*media_file_changed)(LyricSearch *lys,const gchar *mrl);
 	void (*lyric_updated)(LyricSearch *lys,const gchar *lrcpath);
 };
 

@@ -120,6 +120,9 @@ lyric_search_set_status(LyricSearch *lys,LyricSearchStatus lss);
 static void
 lyric_search_save_config(LyricSearch *lys);
 
+static void
+lyric_search_file_changed(LyricSearch *lys,const gchar *mrl);
+
 static guint LYRIC_SEARCH_SIGNALS[SIGNAL_LAST]={0};
 
 static gpointer 
@@ -397,9 +400,10 @@ lyric_search_class_init(LyricSearchClass *class)
 	GObjectClass *objclass = G_OBJECT_CLASS(class);
 	objclass->finalize = lyric_search_finalize;
 	objclass->constructor = lyric_search_constructor;
+	class->media_file_changed = lyric_search_file_changed;
 
 	LYRIC_SEARCH_SIGNALS[LYRIC_INFO_CHANGE] = 
-				g_signal_new ("lyric-info-change",
+				g_signal_new ("lyric-info-changed",
 							G_TYPE_FROM_CLASS(class),
 							G_SIGNAL_RUN_LAST,
 							G_STRUCT_OFFSET(LyricSearchClass,lyric_info_change),
@@ -408,7 +412,7 @@ lyric_search_class_init(LyricSearchClass *class)
 							G_TYPE_NONE,0);
 
 	LYRIC_SEARCH_SIGNALS[LYRIC_FILE_CHANGE] = 
-				g_signal_new ("media-file-change",
+				g_signal_new ("media-file-changed",
 							G_OBJECT_CLASS_TYPE(class),
 							G_SIGNAL_RUN_LAST,
 							G_STRUCT_OFFSET(LyricSearchClass,media_file_change),
@@ -616,6 +620,12 @@ lyric_search_finalize(GObject *object)
 	G_OBJECT_CLASS(lyric_search_parent_class)->finalize(object);
 }
 
+static void
+lyric_search_file_changed(LyricSearch *lys,const gchar *mrl)
+{
+	if(lys->mainwin && GTK_IS_WINDOW(lys->mainwin))
+		gtk_widget_hide(GTK_WIDGET(lys->mainwin));
+}
 
 void
 lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,const gchar *album)
