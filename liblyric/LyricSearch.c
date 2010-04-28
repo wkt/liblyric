@@ -406,7 +406,7 @@ lyric_search_class_init(LyricSearchClass *class)
 				g_signal_new ("lyric-info-changed",
 							G_TYPE_FROM_CLASS(class),
 							G_SIGNAL_RUN_LAST,
-							G_STRUCT_OFFSET(LyricSearchClass,lyric_info_change),
+							G_STRUCT_OFFSET(LyricSearchClass,lyric_info_changed),
 							NULL,NULL,
 							g_cclosure_marshal_VOID__VOID,
 							G_TYPE_NONE,0);
@@ -415,7 +415,7 @@ lyric_search_class_init(LyricSearchClass *class)
 				g_signal_new ("media-file-changed",
 							G_OBJECT_CLASS_TYPE(class),
 							G_SIGNAL_RUN_LAST,
-							G_STRUCT_OFFSET(LyricSearchClass,media_file_change),
+							G_STRUCT_OFFSET(LyricSearchClass,media_file_changed),
 							NULL,NULL,
 							g_cclosure_marshal_VOID__STRING,
 							G_TYPE_NONE,1,

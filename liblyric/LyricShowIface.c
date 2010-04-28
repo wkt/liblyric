@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include "LyricShowIface.h"
 
 static void
 lyric_show_base_init (gpointer g_class)
@@ -46,7 +47,7 @@ const gchar *lyric_show_get_description(LyricShow *lsw)
         dest = (*iface->description)(lsw);
     }else{
         g_critical ("LyricShow->description() unimplemented for type %s", 
-                    g_type_name (G_OBJECT_TYPE (activatable)));
+                    g_type_name (G_OBJECT_TYPE (lsw)));
     }
     return dest;
 }
@@ -58,21 +59,22 @@ void lyric_show_set_time(LyricShow *lsw,guint64 time)
     iface = LYRIC_SHOW_GET_IFACE(lsw);
     g_return_if_fail(LYRIC_IS_SHOW(lsw));
     if(iface->set_time){
-        dest = (*iface->set_time)(lsw,time);
+        (*iface->set_time)(lsw,time);
     }else{
         g_critical ("LyricShow->set_time() unimplemented for type %s", 
-                    g_type_name (G_OBJECT_TYPE (activatable)));
+                    g_type_name (G_OBJECT_TYPE (lsw)));
     }
 }
 
 void lyric_show_set_lyric(LyricShow *lsw,const gchar *lyric_file)
 {
+    LyricShowIface *iface;
     iface = LYRIC_SHOW_GET_IFACE(lsw);
     g_return_if_fail(LYRIC_IS_SHOW(lsw));
     if(iface->set_lyric){
-        dest = (*iface->set_lyric)(lsw,lyric_file);
+        (*iface->set_lyric)(lsw,lyric_file);
     }else{
         g_critical ("LyricShow->set_lyric() unimplemented for type %s", 
-                    g_type_name (G_OBJECT_TYPE (activatable)));
+                    g_type_name (G_OBJECT_TYPE (lsw)));
     }
 }

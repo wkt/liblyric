@@ -6,9 +6,9 @@ test -z "$srcdir" && srcdir=.
 
 ORIGDIR=`pwd`
 cd $srcdir
-PROJECT=nautilus-reload
+PROJECT=lyricsearch
 TEST_TYPE=-d
-FILE=src
+FILE=liblyric
 
 DIE=0
 
@@ -24,6 +24,7 @@ if libtoolize --version < /dev/null > /dev/null 2>&1 ; then
 		;;
 	esac
 fi
+
 if $have_libtool ; then : ; else
 	echo
 	echo "You must have libtool 1.4 installed to compile $PROJECT."
@@ -107,7 +108,7 @@ rm -rf autom4te.cache
 # README and INSTALL are required by automake, but may be deleted by clean
 # up rules. to get automake to work, simply touch these here, they will be
 # regenerated from their corresponding *.in files by ./configure anyway.
-touch README INSTALL
+touch README INSTALL NEWS AUTHORS ChangeLog
 
 $ACLOCAL $ACLOCAL_FLAGS || exit $?
 
