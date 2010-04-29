@@ -7,7 +7,7 @@ INCLUDES =						\
     $(NULL)
 ###	-Werror                                         
 
-LIB_LYRIC_DIR=$(prefix)/lib
+LIB_LYRIC_DIR=$(pkglibdir)
 
 lib_lyricdir=$(LIB_LYRIC_DIR)
 

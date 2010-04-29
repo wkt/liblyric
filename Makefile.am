@@ -1,6 +1,7 @@
 SUBDIRS =           \
         liblyric    \
         po \
+        data \
         $(NULL)
 
 
