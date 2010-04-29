@@ -83,5 +83,6 @@ IT_PROG_INTLTOOL([0.35.0])
 AC_OUTPUT([
 	Makefile 
 	liblyric/Makefile
-	po/Makefile.in 
+	po/Makefile.in
+	data/Makefile
 ])
