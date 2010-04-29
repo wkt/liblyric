@@ -20,8 +20,8 @@ liblyric_la_SOURCES =                       \
                 LyricSearch.h               \
                 LyricShowIface.c            \
                 LyricShowIface.h            \
-                lyricshowtreeview.c         \
-                lyricshowtreeview.h         \
+                LyricShowTreeView.c         \
+                LyricShowTreeView.h         \
                 LyricSogouSearch.c          \
                 LyricSogouSearch.h          \
                 LyricTtSearch.c             \

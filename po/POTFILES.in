@@ -2,6 +2,6 @@ liblyric/LyricFunc.c
 liblyric/LyricSearch.c
 liblyric/LyricSearchCurl.c
 liblyric/LyricShowIface.c
-liblyric/lyricshowtreeview.c
+liblyric/LyricShowTreeView.c
 liblyric/LyricSogouSearch.c
 liblyric/LyricTtSearch.c

@@ -34,7 +34,7 @@ lyric_show_get_type (void)
 	return type;
 }
 
-const gchar *lyric_show_get_description(LyricShow *lsw)
+const gchar *lyric_show_get_label(LyricShow *lsw)
 {
     const gchar* dest = NULL;
     LyricShowIface *iface;
@@ -43,10 +43,10 @@ const gchar *lyric_show_get_description(LyricShow *lsw)
 
     g_return_val_if_fail (LYRIC_IS_SHOW(lsw),NULL);
 
-    if(iface->description){
-        dest = (*iface->description)(lsw);
+    if(iface->label){
+        dest = (*iface->label)(lsw);
     }else{
-        g_critical ("LyricShow->description() unimplemented for type %s", 
+        g_critical ("LyricShow->label() unimplemented for type %s", 
                     g_type_name (G_OBJECT_TYPE (lsw)));
     }
     return dest;

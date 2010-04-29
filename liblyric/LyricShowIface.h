@@ -15,7 +15,7 @@ typedef struct _LyricShowIface LyricShowIface;
 struct _LyricShowIface
 {
     GTypeInterface g_iface;
-    const gchar *(*description)(LyricShow *lsw);
+    const gchar *(*label)(LyricShow *lsw);
     void (*set_time)(LyricShow *lsw,guint64 time);
     void (*set_lyric)(LyricShow *lsw,const gchar *lyric_file);
 };
@@ -23,7 +23,7 @@ struct _LyricShowIface
 GType
 lyric_show_get_type(void);
 
-const gchar *lyric_show_get_description(LyricShow *lsw);
+const gchar *lyric_show_get_label(LyricShow *lsw);
 
 void lyric_show_set_time(LyricShow *lsw,guint64 time);
 
