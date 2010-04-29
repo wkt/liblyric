@@ -528,7 +528,10 @@ lyric_search_constructor(GType type,
 	LyricSearchEngine *enginev[]={lyric_search_get_tt_engine(),NULL};
 	n = G_N_ELEMENTS(enginev);
 
-	ui_xml = "/home/wkt/projects/LyricShow/download.glade";
+	ui_xml = "/home/wkt/projects/lyricsearch/data/download.glade";
+
+	if(!g_file_test(ui_xml,G_FILE_TEST_EXISTS))
+		ui_xml = UIDIR"/download.glae";
 
 	g_debug("%s:coming",__func__);
 

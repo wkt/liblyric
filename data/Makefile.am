@@ -1,2 +1,3 @@
-uidir=$(pkgdatadir)
+
+uidir=$(UIDIR)
 ui_DATA = download.glade

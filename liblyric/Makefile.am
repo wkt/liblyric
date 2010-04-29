@@ -1,13 +1,14 @@
 INCLUDES =						\
 	-DDATADIR=\"$(datadir)\"			\
 	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" 	\
+	-DUIDIR=\"$(UIDIR)\"			\
 	-I$(top_srcdir)					\
 	-I$(top_builddir)				\
 	$(WARN_CFLAGS)                                  \
     $(NULL)
 ###	-Werror                                         
 
-LIB_LYRIC_DIR=$(pkglibdir)
+###LIB_LYRIC_DIR=$(pkglibdir)
 
 lib_lyricdir=$(LIB_LYRIC_DIR)
 

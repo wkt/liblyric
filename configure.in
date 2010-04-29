@@ -56,8 +56,12 @@ PKG_CHECK_MODULES(LIBXML2,libxml-2.0)
 ##NAUTILUS_EXTENSION_DIR=`$PKG_CONFIG --variable=extensiondir libnautilus-extension`
 ##AC_SUBST(NAUTILUS_EXTENSION_DIR)
 
-#LIB_LYRIC_DIR=${prefix}/lib
-#AC_SUBST(LIB_LYRIC_DIR)
+LIB_LYRIC_DIR=$libdir
+AC_SUBST(LIB_LYRIC_DIR)
+
+UIDIR=${datadir}/$PACKAGE
+AC_SUBST(UIDIR)
+#AC_DEFINE_UNQUOTED([UIDIR],"$UIDIR",[directory look for ui])
 # GConf
 
 #AC_PATH_PROG(GCONFTOOL, gconftool-2, no)
