@@ -2,7 +2,7 @@
 
 #define LYRIC_SHOW_TREE_VIEW_H
 
-#define LYRIC_SHOW_TREE_VIEW_TYPE                 (lyric_search_get_type ())
+#define LYRIC_SHOW_TREE_VIEW_TYPE                 (lyric_show_tree_view_get_type ())
 #define LYRIC_SHOW_TREE_VIEW(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), LYRIC_SHOW_TREE_VIEW_TYPE, LyricShowTreeView))
 #define LYRIC_SHOW_TREE_VIEW_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), LYRIC_SHOW_TREE_VIEW_TYPE, LyricShowTreeViewClass))
 #define IS_LYRIC_SHOW_TREE_VIEW(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), LYRIC_SHOW_TREE_VIEW_TYPE))
@@ -15,7 +15,10 @@ typedef struct _LSTreeViewPrivate LSTreeViewPrivate;
 
 struct _LyricShowTreeView
 {
-    GtkTreeView parent;
+    GtkTreeView      parent;
+    GtkListStore     *store;
+    GtkCellRenderer  *cell;
+
     LSTreeViewPrivate *priv;
 };
 
@@ -27,5 +30,7 @@ struct _LyricShowTreeViewClass
 GType
 lyric_show_tree_view_get_type(void);
 
+GtkWidget*
+lyric_show_tree_view_new(void);
 
 #endif ///LYRIC_SHOW_TREE_VIEW_H

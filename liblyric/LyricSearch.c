@@ -1014,6 +1014,9 @@ lyric_search_new(void)
 
 #ifdef test_lyric_search
 
+#include "LyricShowIface.h"
+#include "LyricShowTreeView.h"
+
 void
 lyric_search_show_info(LyricSearch *lys)
 {
@@ -1021,6 +1024,31 @@ lyric_search_show_info(LyricSearch *lys)
 	fprintf(stdout,"title :%s\n",lys->title);
 }
 
+int main(int argc,char **argv)
+{
+	GtkWidget *win;
+	GtkWidget *lsw;
+	GtkWidget *sw;
+	
+	gtk_init(&argc,&argv);
+	lsw = lyric_show_tree_view_new();
+	win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	sw = gtk_scrolled_window_new(NULL,NULL);
+	gtk_scrolled_window_set_policy(sw,GTK_POLICY_NEVER,GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(win),sw);
+	gtk_container_add(GTK_CONTAINER(sw),lsw);
+	lyric_show_set_lyric(LYRIC_SHOW(lsw),argv[1]);
+	lyric_show_set_time(LYRIC_SHOW(lsw),13034);
+	gtk_window_resize(win,250,300);
+	gtk_window_set_position(win,GTK_WIN_POS_CENTER_ALWAYS);
+	gtk_window_set_opacity(win,0);
+	gtk_widget_show_all(win);
+	g_signal_connect(win,"destroy",G_CALLBACK(gtk_main_quit),NULL);
+	gtk_main();
+	return 0;
+}
+
+#if 0
 int main(int argc,char **argv)
 {
 	LyricSearch *lys;
@@ -1035,5 +1063,6 @@ int main(int argc,char **argv)
 	gtk_main();
 	return 0;
 }
+#endif
 
 #endif ///test_lyric_search

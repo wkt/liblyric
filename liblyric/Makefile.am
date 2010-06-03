@@ -27,6 +27,8 @@ liblyric_la_SOURCES =                       \
                 LyricSogouSearch.h          \
                 LyricTtSearch.c             \
                 LyricTtSearch.h             \
+                lyricread.c                 \
+                lyricread.h                 \
                 $(NULL)
 
 #                LyricSearchCurl.c           
@@ -36,3 +38,9 @@ liblyric_la_SOURCES =                       \
 liblyric_la_LDFLAGS = -module -avoid-version $(CURL_LIBS) $(GTK_LIBS) $(LIBXML2_LIBS)
 liblyric_la_CFLAGS = $(CURL_CFLAGS) $(GTK_CFLAGS) $(LIBXML2_CFLAGS)
 ##liblyric_la_LIBADD = 
+
+noinst_PROGRAMS = test_lyric
+
+test_lyric_SOURCES = $(liblyric_la_SOURCES)
+test_lyric_CFLAGS = $(liblyric_la_CFLAGS) -Dtest_lyric_search
+test_lyric_LDFLAGS = $(liblyric_la_LDFLAGS)
