@@ -1024,6 +1024,7 @@ lyric_search_show_info(LyricSearch *lys)
 	fprintf(stdout,"title :%s\n",lys->title);
 }
 
+#if 0
 int main(int argc,char **argv)
 {
 	GtkWidget *win;
@@ -1048,7 +1049,7 @@ int main(int argc,char **argv)
 	return 0;
 }
 
-#if 0
+#else
 int main(int argc,char **argv)
 {
 	LyricSearch *lys;
