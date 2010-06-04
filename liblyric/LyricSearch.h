@@ -10,7 +10,6 @@
 
 G_BEGIN_DECLS
 
-GType lyric_search_get_type(void);
 
 #define LYRIC_SEARCH_TYPE                 (lyric_search_get_type ())
 #define LYRIC_SEARCH(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), LYRIC_SEARCH_TYPE, LyricSearch))
@@ -46,8 +45,25 @@ struct _LyricSearchClass
 	void (*lyric_updated)(LyricSearch *lys,const gchar *lrcpath);
 };
 
+GType lyric_search_get_type(void);
+
 gboolean
 lyric_search_save_lyric(LyricSearch *lys,const gchar *uri);
+
+void
+lyric_search_set_mrl(LyricSearch *lys,const gchar *mrl);
+
+void
+lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,const gchar *album);
+
+gboolean
+lyric_search_auto_get_lyric(LyricSearch *lys);
+
+gboolean
+lyric_search_manual_lyric(LyricSearch *lys);
+
+LyricSearch*
+lyric_search_new(void);
 
 G_END_DECLS
 #endif ///__LYIRC_SEARCH_H_

@@ -30,6 +30,25 @@ struct _LyricInfo
   void (*content_free)(gpointer);
 };
 
+
+/* utf8->iso-8859-1
+ * loacle->utf8
+ **/
+gchar *
+guess_encode_to_utf8(const gchar *str);
+
+/*
+ * loacle->utf8
+ * */
+gchar *
+guess_string_to_utf8(const gchar *str);
+
+gchar*
+encode_to_utf8(const gchar *str,const gchar *charset);
+
+gchar*
+encode_from_utf8(const gchar *str,const gchar *charset);
+
 void
 lyric_line_free(LyricLine *ll);
 

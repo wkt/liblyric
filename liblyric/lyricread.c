@@ -52,9 +52,10 @@ const gchar **
 guess_codeset(void)
 {
     char *codeset = NULL;
-    const gchar **cov;
+    const gchar **cov=localencode[0].encodev;
     int i;
 
+    i = 0;
     codeset = setlocale(LC_CTYPE, NULL);
     if(codeset){
         while(localencode[i].lang){
@@ -64,8 +65,7 @@ guess_codeset(void)
             }
             i++;
         }
-    }else
-        cov = localencode[0].encodev;
+    }
     return cov;
 }
 
@@ -101,16 +101,16 @@ encode_to_originally(const gchar *str)
 }
 
 gchar *
-string_to_utf8(const gchar *str)
+guess_string_to_utf8(const gchar *str)
 {
     const gchar **codev;
     gchar *ret_str = NULL;
     size_t n = 0;
-    if(g_utf8_validate (str,-1,NULL))
-        return g_strdup(str);
+    gsize nw =0;
+
     codev = guess_codeset();
     for(n=0;codev && codev[n];n++){
-        ret_str = g_convert(str,-1,codev[n],"utf-8",NULL,NULL,NULL);
+        ret_str = g_convert(str,-1,"utf-8",codev[n],NULL,&nw,NULL);
         if(ret_str){
             break;
         }
@@ -121,21 +121,36 @@ string_to_utf8(const gchar *str)
 }
 
 gchar *
-encode_to_utf8(const gchar *str)
+guess_encode_to_utf8(const gchar *str)
 {
     gchar *orig;
     gchar *ret_str;
 
     orig = encode_to_originally(str);
     if(orig){
-        ret_str = string_to_utf8(orig);
+        ret_str = guess_string_to_utf8(orig);
         g_free(orig);
     }else{
-        ret_str = string_to_utf8(str);
+        ret_str = guess_string_to_utf8(str);
     }
     return ret_str;
 }
 
+gchar*
+encode_to_utf8(const gchar *str,const gchar *charset)
+{
+    gchar *ret_str;
+    ret_str = g_convert(str,-1,"utf-8",charset,NULL,NULL,NULL);
+    return ret_str;
+}
+
+gchar*
+encode_from_utf8(const gchar *str,const gchar *charset)
+{
+    gchar *ret_str;
+    ret_str = g_convert(str,-1,charset,"utf-8",NULL,NULL,NULL);
+    return ret_str;
+}
 
 void
 lyric_line_free(LyricLine *ll)

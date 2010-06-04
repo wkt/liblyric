@@ -7,10 +7,15 @@
 #include <curl/curl.h>
 
 static size_t
-curl_write_function(void *ptr, size_t size, size_t nmemb, GString *str)
+curl_write_function(void *ptr, size_t size, size_t nmemb, GString **str)
 {
-	g_string_append_printf(str,ptr,size*nmemb);
-	return size*nmemb;
+	size_t n = size*nmemb;
+	gchar *pt = ptr;
+	if(*str == NULL){
+		*str = g_string_new("");
+	}
+	*str = g_string_append_len(*str,pt,n);
+	return n;
 }
 
 GString*
@@ -18,16 +23,15 @@ lyric_search_get_data(const char *uri)
 {
 	CURLcode ucode;
 	CURL *curl;
-	GString *str;
+	GString *str = NULL;
 
 	ucode = curl_global_init(CURL_GLOBAL_ALL);
 	if(ucode != CURLE_OK)
 		return NULL;
-	str = g_string_new("");
 	curl = curl_easy_init( );
 	curl_easy_setopt(curl, CURLOPT_URL,uri);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,curl_write_function);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA,str);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,&str);
 	ucode = curl_easy_perform(curl);
 	if(ucode != CURLE_OK){
 		fprintf(stderr,"curl_easy_perform():%s\n",curl_easy_strerror(ucode));
@@ -76,7 +80,17 @@ lyric_func_save_lyric(const char *uri,const gchar *filename,GError **error)
 
 	fprintf(stderr,"fetch:%s\n",uri);
 	text = lyric_func_get_contents(uri,&length,NULL);
+	text[length]=0;
 	if(text){
+		if(!g_utf8_validate(text,-1,NULL)){
+			gchar *utf8;
+			utf8 = guess_string_to_utf8(text);
+			if(utf8){
+				g_free(text);
+				text = utf8;
+				length = strlen(utf8);
+			}
+		}
 		ret_bl = g_file_set_contents(filename,text,length,error);
 	}
 	g_free(text);

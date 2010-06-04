@@ -2,6 +2,7 @@
 #include <gtk/gtk.h>
 #include "LyricSearch.h"
 #include "LyricTtSearch.h"
+#include "LyricSogouSearch.h"
 
 struct _LyricSearch
 {
@@ -43,7 +44,7 @@ struct _LyricSearchPrivate
 {
 	FILE *fpw;
 	GSList *search_result;
-	LyricSearchEngine **engine_array;
+	GSList *engine;
 	const gchar *config;
 	GKeyFile *confkey;
 
@@ -352,7 +353,8 @@ lyric_search_engine_box_config(LyricSearch *lys)
 	GtkListStore *store;
 	GtkTreeIter iter;
 	GtkCellRenderer *cell;
-	LyricSearchEngine **engine_array;
+	LyricSearchEngine *engine;
+	GSList *l;
 	gsize n =0;
 
 	store = gtk_list_store_new(ENGINE_BOX_LAST,
@@ -369,14 +371,15 @@ lyric_search_engine_box_config(LyricSearch *lys)
 								NULL);
 
 	g_signal_connect(lys->engine_box,"changed",G_CALLBACK(lyric_search_engine_box_change),lys);
-	engine_array = lys->priv->engine_array;
-	for(n=0;engine_array[n];n++){
+	
+	for(l = lys->priv->engine;l;l=l->next){
+		engine = l->data;
 		gtk_list_store_append(store,&iter);
 		gtk_list_store_set(store,&iter,
-						ENGINE_BOX_DESCRIPTION,engine_array[n]->description,
-						ENGINE_BOX_ENGINE_POINTER,engine_array[n],
+						ENGINE_BOX_DESCRIPTION,engine->description,
+						ENGINE_BOX_ENGINE_POINTER,engine,
 						-1);
-		if(g_strcmp0(engine_array[n]->description,lys->default_engine) == 0){
+		if(g_strcmp0(engine->description,lys->default_engine) == 0){
 			gtk_combo_box_set_active_iter(lys->engine_box,&iter);
 		}
 	}
@@ -524,9 +527,6 @@ lyric_search_constructor(GType type,
 	LyricSearch *lys;
 	GtkBuilder *build;
 	gsize n = 0;
-	LyricSearchEngine **engine_array;
-	LyricSearchEngine *enginev[]={lyric_search_get_tt_engine(),NULL};
-	n = G_N_ELEMENTS(enginev);
 
 	ui_xml = "/home/wkt/projects/lyricsearch/data/download.glade";
 
@@ -544,6 +544,9 @@ lyric_search_constructor(GType type,
 	lys = LYRIC_SEARCH(object);
 	lys->priv->fpw = fdopen(pipefd[1],"w");
 
+	lys->priv->engine = g_slist_insert(lys->priv->engine,lyric_search_get_tt_engine(),-1);
+	lys->priv->engine = g_slist_insert(lys->priv->engine,lyric_search_get_sogou_engine(),-1);
+
 	GIOChannel *gio = g_io_channel_unix_new(pipefd[0]);
 	lys->priv->io_watch_tag = g_io_add_watch(gio,G_IO_IN|G_IO_PRI|G_IO_HUP,lyric_search_io_watch,lys);
 	g_io_channel_unref (gio);
@@ -556,10 +559,6 @@ lyric_search_constructor(GType type,
 	g_signal_connect(lys->mainwin,"delete-event",G_CALLBACK(lyric_search_widget_delete_event),lys);
 	g_signal_connect(lys->mainwin,"hide",G_CALLBACK(lyric_search_mainwin_hide),lys);
 	g_signal_connect(lys->mainwin,"show",G_CALLBACK(lyric_search_mainwin_show),lys);
-
-	engine_array = g_new0(LyricSearchEngine*,n);
-	memcpy(engine_array,enginev,sizeof(enginev));
-	lys->priv->engine_array = engine_array;
 
 	lys->engine_box = GTK_COMBO_BOX(gtk_builder_get_object(build,"engine_box"));
 	lyric_search_engine_box_config(lys);
@@ -619,6 +618,9 @@ lyric_search_finalize(GObject *object)
 
 	if(lys->pathv)
 		g_strfreev(lys->pathv);
+
+	if(lys->priv->engine)
+		g_slist_free(lys->priv->engine);
 
 	G_OBJECT_CLASS(lyric_search_parent_class)->finalize(object);
 }

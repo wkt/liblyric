@@ -10,7 +10,7 @@ typedef struct {
 	gchar *title;
 	gchar *album;
 	gchar *uri;
-	gint no;
+	gint   no;
 }LyricId;
 
 typedef GSList* (*LyricSearchFunc)(const LyricId *id);
