@@ -5,3 +5,4 @@ liblyric/LyricShowIface.c
 liblyric/LyricShowTreeView.c
 liblyric/LyricSogouSearch.c
 liblyric/LyricTtSearch.c
+data/download.glade
