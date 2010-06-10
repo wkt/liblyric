@@ -1,5 +1,5 @@
 #include <gtk/gtk.h>
-#include "LyricShowIface.h"
+#include "LyricShow.h"
 
 static void
 lyric_show_base_init (gpointer g_class)

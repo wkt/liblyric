@@ -30,7 +30,5 @@ struct _LyricShowTreeViewClass
 GType
 lyric_show_tree_view_get_type(void);
 
-GtkWidget*
-lyric_show_tree_view_new(void);
 
 #endif ///LYRIC_SHOW_TREE_VIEW_H

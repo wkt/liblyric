@@ -29,4 +29,7 @@ void lyric_show_set_time(LyricShow *lsw,guint64 time);
 
 void lyric_show_set_lyric(LyricShow *lsw,const gchar *lyric_file);
 
+GtkWidget*
+lyric_show_tree_view_new(void);
+
 #endif ///LYRIC_SHOW_IFACE_H

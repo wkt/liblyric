@@ -20,10 +20,8 @@ lib_lyric_LTLIBRARIES=liblyric.la
 
 liblyric_la_SOURCES =                       \
                 LyricFunc.c                 \
-                LyricFunc.h                 \
                 LyricSearch.c               \
-                LyricShowIface.c            \
-                LyricShowIface.h            \
+                LyricShow.c            \
                 LyricShowTreeView.c         \
                 LyricShowTreeView.h         \
                 LyricSogouSearch.c          \
@@ -37,7 +35,11 @@ liblyric_la_SOURCES =                       \
 #                LyricSearchCurl.h           
 
 lyricincdir=$(includedir)/liblyric
-lyricinc_HEADERS = LyricSearch.h lyricread.h LyricShowIface.h
+lyricinc_HEADERS =  LyricSearch.h       \
+                    lyricread.h         \
+                    LyricShow.h         \
+                    LyricFunc.h         \
+                    $(NULL)
 
 liblyric_la_LDFLAGS = -module $(CURL_LIBS) $(GTK_LIBS) $(LIBXML2_LIBS) $(libtool_opts)
 liblyric_la_CFLAGS = $(CURL_CFLAGS) $(GTK_CFLAGS) $(LIBXML2_CFLAGS)
