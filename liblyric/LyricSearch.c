@@ -1016,7 +1016,7 @@ lyric_search_new(void)
 
 #ifdef test_lyric_search
 
-#include "LyricShowIface.h"
+#include "LyricShow.h"
 #include "LyricShowTreeView.h"
 
 void

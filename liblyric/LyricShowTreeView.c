@@ -4,7 +4,7 @@
 #include <glib/gi18n.h>
 #include "LyricShowTreeView.h"
 
-#include "LyricShowIface.h"
+#include "LyricShow.h"
 #include "lyricread.h"
 
 enum{
