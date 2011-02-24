@@ -22,7 +22,7 @@ struct _LocalEncode
 };
 
 
-static const gchar *zh_CN[]={"CP936","UTF-16",NULL};
+static const gchar *zh_CN[]={"CP936",NULL};
 static LocalEncode localencode[]=
 {
     {"zh_CN",zh_CN},
@@ -290,9 +290,7 @@ lyric_info_free(LyricInfo *info)
     g_free(info);
 }
 
-#ifdef TEST_LYRIC_READ
-
-static void
+void
 lyric_line_list(GList *l)
 {
     LyricLine *ll;
@@ -301,6 +299,9 @@ lyric_line_list(GList *l)
         fprintf(stderr,"%-6lld->%s\n",ll->time,ll->line);
     }
 }
+
+
+#ifdef TEST_LYRIC_READ
 
 void
 lyric_info_show(LyricInfo *info)

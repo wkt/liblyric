@@ -91,7 +91,9 @@ lyric_func_save_lyric(const char *uri,const gchar *filename,GError **error)
 				length = strlen(utf8);
 			}
 		}
+		fprintf(stderr,"fetch:%s\n",filename);
 		ret_bl = g_file_set_contents(filename,text,length,error);
+		fprintf(stderr,"save lyric to %s : %s\n",filename,ret_bl?"OK":"NO");
 	}
 	g_free(text);
 	return ret_bl;

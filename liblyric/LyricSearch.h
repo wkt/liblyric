@@ -53,6 +53,10 @@ lyric_search_save_lyric(LyricSearch *lys,const gchar *uri);
 void
 lyric_search_set_mrl(LyricSearch *lys,const gchar *mrl);
 
+const gchar *
+lyric_search_get_lyricfile(LyricSearch *lys);
+
+
 void
 lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,const gchar *album);
 

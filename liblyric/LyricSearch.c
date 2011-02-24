@@ -48,6 +48,8 @@ struct _LyricSearchPrivate
 	const gchar *config;
 	GKeyFile *confkey;
 
+	guint auto_count;
+
 	guint io_watch_tag;
 	gboolean is_show;
 	LyricSearchStatus lss;
@@ -441,8 +443,10 @@ lyric_search_class_init(LyricSearchClass *class)
 static void
 lyric_search_set_status(LyricSearch *lys,LyricSearchStatus lss)
 {
+	fprintf(stderr,"sent %d\n",lss);
 	fprintf(lys->priv->fpw,"%d\n",lss);
 	fflush(lys->priv->fpw);
+	fflush(NULL);
 }
 
 static gboolean
@@ -457,21 +461,26 @@ lyric_search_io_watch (GIOChannel *source,
 	gint can_sensitive = 0;//not change
 
 	ios = g_io_channel_read_line(source,&line,&n,NULL,NULL);
-
+/*
+	fprintf(stderr,"get %s\n",line);
 	if(!lys->priv->is_show){
 		can_sensitive = 2;
 		goto ext;
 	}
-
+	fprintf(stderr,"go on %s\n",line);
+*/
 	if(line){
 		st_id = g_ascii_strtoll(line,NULL,0);
 	}
 	gtk_label_set_text(lys->info_label,"");
 	switch(st_id){
 	case LYRIC_SEARCH_STATUS_NONE:
-	case LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES:
 	case LYRIC_SEARCH_STATUS_AUTO_GET_LYRIC_FAIL:
+	break;
+	case LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES:
 	case LYRIC_SEARCH_STATUS_AUTO_GET_LYRIC_OK:
+		fprintf(stderr,"Try emit signal !\n");
+		g_signal_emit(lys,LYRIC_SEARCH_SIGNALS[LYRIC_UPDATED],0,lys->lyricfile);
 	break;
 	case LYRIC_SEARCH_STATUS_SEARCHING:
 		can_sensitive = 1; //insensitive
@@ -661,7 +670,6 @@ lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,co
 			lys->album = NULL;
 		}
 	}
-	g_signal_emit(lys,LYRIC_SEARCH_SIGNALS[LYRIC_UPDATED],0);
 }
 
 void
@@ -679,8 +687,9 @@ lyric_search_set_mrl(LyricSearch *lys,const gchar *mrl)
 	lys->mediadir = NULL;
 
 	if(mrl){
-		lys->mrl = g_strdup(lys->mrl);
+		lys->mrl = g_strdup(mrl);
 		path = g_filename_from_uri(mrl,NULL,NULL);
+		g_debug("path:%s",path);
 		if(path){
 			lys->filename = g_path_get_basename(path);
 			lys->mediadir = g_path_get_dirname(path);
@@ -699,6 +708,7 @@ lyric_search_set_mrl(LyricSearch *lys,const gchar *mrl)
 			}
 		}
 	}
+
 	if(lys->mediadir == NULL){
 		lys->mediadir = g_build_filename(g_get_home_dir(),"Lyric",NULL);
 	}
@@ -783,6 +793,7 @@ lyric_search_find_local_lrc(LyricSearch *lys)
 			lyricname = lyric_search_fmt_string(lys,fmtv[j]);
 			lyricfile = g_build_filename(lyricdir,lyricname,NULL);
 			g_free(lyricname);
+			fprintf(stderr,"%s--lyric file :%s\n",__func__,lyricfile);
 			if(g_file_test(lyricfile,G_FILE_TEST_EXISTS)){
 				ret_bl = TRUE;
 				lys->lyricfile = lyricfile;
@@ -791,6 +802,7 @@ lyric_search_find_local_lrc(LyricSearch *lys)
 			g_free(lyricfile);
 		}
 		g_free(lyricdir);
+		lyricdir = NULL;
 	}
 	return ret_bl;
 }
@@ -872,6 +884,11 @@ gboolean
 lyric_search_auto_get_lyric(LyricSearch *lys)
 {
 	gboolean ret_bl = TRUE;
+
+	fprintf(stderr,"mrl : %s,filename:%s\n",lys->mrl,lys->filename);
+	if(!lys->mrl ||!lys->filename)
+		return NULL;
+
 	if(lyric_search_find_local_lrc(lys)){
 		lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES);
 		fprintf(stderr,"find lyric : %s\n",lys->lyricfile);
@@ -879,16 +896,17 @@ lyric_search_auto_get_lyric(LyricSearch *lys)
 		GSList *l;
 		l = lyric_search_find_from_remote(lys);
 		ret_bl = FALSE;
+		lyric_line_list(l);
 		if(l){
 			lyric_func_lyricid_list(l);
 			ret_bl = lyric_func_save_lyric(((LyricId*)l->data)->uri,lys->lyricfile,NULL);
 			lyric_func_free_lyricid_list(l);
-		}else{
-			lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_AUTO_GET_LYRIC_FAIL);
 		}
 	}
 	if(ret_bl){
 		lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_AUTO_GET_LYRIC_OK);
+	}else{
+		lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_AUTO_GET_LYRIC_FAIL);
 	}
 	return ret_bl;
 }
@@ -1006,6 +1024,12 @@ lyric_search_save_config(LyricSearch *lys)
 		g_free(data);
 	}
 	fclose(fp);
+}
+
+const gchar*
+lyric_search_get_lyricfile(LyricSearch* lys)
+{
+	return (const gchar*)lys->lyricfile;
 }
 
 LyricSearch*

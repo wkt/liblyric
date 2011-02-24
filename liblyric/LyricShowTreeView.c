@@ -124,7 +124,7 @@ lyric_show_tree_view_update(LyricShowTreeView *lstv)
                          if(lstv->priv->time < ntime){
                             markup = g_strdup_printf("<span foreground=\"red\"><b>%s</b></span>",line);
                             text = markup;
-                            g_warning("%s",text);
+                            ///g_warning("%s",text);
                          }
                     }
                 }
@@ -172,10 +172,11 @@ lyric_show_tree_view_set_lyric(LyricShow *iface,const gchar *lyric_file)
     GList *l = NULL;
 
     g_free(lstv->priv->lyric);
+    lstv->priv->lyric = NULL;
+    gtk_list_store_clear(lstv->store);
     if(lyric_file){
         lstv->priv->lyric = g_strdup(lyric_file);
         lstv->priv->lyricinfo = info = lyric_read(lyric_file);
-        gtk_list_store_clear(lstv->store);
 
         if(info->title){
             text = g_strdup_printf(_("Title:%s"),info->title);

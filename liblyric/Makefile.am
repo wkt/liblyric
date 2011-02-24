@@ -39,6 +39,7 @@ lyricinc_HEADERS =  LyricSearch.h       \
                     lyricread.h         \
                     LyricShow.h         \
                     LyricFunc.h         \
+                    LibLyric.h          \
                     $(NULL)
 
 liblyric_la_LDFLAGS = -module $(CURL_LIBS) $(GTK_LIBS) $(LIBXML2_LIBS) $(libtool_opts)
