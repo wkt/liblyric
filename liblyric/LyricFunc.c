@@ -1,6 +1,8 @@
 #include "LyricFunc.h"
 #include <stdio.h>
 
+#include "lyricread.h"
+
 #include <glib.h>
 
 #if 1
@@ -72,15 +74,14 @@ lyric_func_get_contents(const char *uri,gsize *length, GError **error)
 #endif
 
 gboolean
-lyric_func_save_lyric(const char *uri,const gchar *filename,GError **error)
+lyric_func_save_data(const gchar *filename,const gchar *data,gsize length,GError **error)
 {
-	char *text;
-	gsize length;
+	const gchar *text = data;
 	gboolean ret_bl = FALSE;
-
-	fprintf(stderr,"fetch:%s\n",uri);
-	text = lyric_func_get_contents(uri,&length,NULL);
-	text[length]=0;
+	
+	if(length < 0){
+		length = strlen(data);
+	}
 	if(text){
 		if(!g_utf8_validate(text,-1,NULL)){
 			gchar *utf8;
@@ -95,6 +96,20 @@ lyric_func_save_lyric(const char *uri,const gchar *filename,GError **error)
 		ret_bl = g_file_set_contents(filename,text,length,error);
 		fprintf(stderr,"save lyric to %s : %s\n",filename,ret_bl?"OK":"NO");
 	}
+	return ret_bl;
+}
+
+gboolean
+lyric_func_save_lyric(const char *uri,const gchar *filename,GError **error)
+{
+	char *text;
+	gsize length;
+	gboolean ret_bl;
+
+	fprintf(stderr,"fetch:%s\n",uri);
+	text = lyric_func_get_contents(uri,&length,NULL);
+	text[length]=0;
+	ret_bl = lyric_func_save_data(filename,text,length,error);
 	g_free(text);
 	return ret_bl;
 }

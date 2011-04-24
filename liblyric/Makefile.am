@@ -24,13 +24,15 @@ liblyric_la_SOURCES =                       \
                 LyricShow.c            \
                 LyricShowTreeView.c         \
                 LyricShowTreeView.h         \
-                LyricSogouSearch.c          \
-                LyricSogouSearch.h          \
                 LyricTtSearch.c             \
                 LyricTtSearch.h             \
                 lyricread.c                 \
+                LyricDownloader.c           \
+                LyricDownloader.h           \
                 $(NULL)
 
+#                LyricSogouSearch.c          \
+#                LyricSogouSearch.h          \
 #                LyricSearchCurl.c           
 #                LyricSearchCurl.h           
 

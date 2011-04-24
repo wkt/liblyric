@@ -13,17 +13,23 @@ typedef struct {
 	gint   no;
 }LyricId;
 
-typedef GSList* (*LyricSearchFunc)(const LyricId *id);
+typedef GSList* (*ParserFunc)(const LyricId *id,const gchar *data);
+typedef gchar *(*LyricGetEngineUriFunc)(const LyricId *id);
 typedef struct _LyricSearchEngine LyricSearchEngine;
 
 struct _LyricSearchEngine
 {
 	const gchar *description;
-	LyricSearchFunc func;
+	////get engine's uri so we can search lyric list
+	LyricGetEngineUriFunc get_engine_uri;
+	ParserFunc parser;
 };
 
 gboolean
 lyric_func_save_lyric(const char *uri,const gchar *filename,GError **error);
+
+gboolean
+lyric_func_save_data(const gchar *filename,const gchar *data,gsize length,GError **error);
 
 char*
 lyric_func_get_contents(const char *uri,gsize *length, GError **error);

@@ -24,24 +24,37 @@ typedef struct _LyricSearchPrivate LyricSearchPrivate;
 
 typedef enum{
 	LYRIC_SEARCH_STATUS_NONE,
+	LYRIC_SEARCH_STATUS_PREPARING,
 	LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES,
 	LYRIC_SEARCH_STATUS_AUTO_GET_LYRIC_FAIL,
 	LYRIC_SEARCH_STATUS_AUTO_GET_LYRIC_OK,
 	LYRIC_SEARCH_STATUS_SEARCHING,
-	LYRIC_SEARCH_STATUS_SEARCH_OK,
-	LYRIC_SEARCH_STATUS_SEARCH_FAILED,
+	LYRIC_SEARCH_STATUS_SEARCHING_GET_DATA,
+	LYRIC_SEARCH_STATUS_SEARCHING_OK,
+	LYRIC_SEARCH_STATUS_SEARCHING_FAILED,
 	LYRIC_SEARCH_STATUS_DOWNLOADING,
-	LYRIC_SEARCH_STATUS_DOWNLOAD_OK,
-	LYRIC_SEARCH_STATUS_DOWNLOAD_FAILED,
+	LYRIC_SEARCH_STATUS_DOWNLOADING_GET_DATA,
+	LYRIC_SEARCH_STATUS_DOWNLOADING_OK,
+	LYRIC_SEARCH_STATUS_DOWNLOADING_FAILED,
+	LYRIC_SEARCH_STATUS_SAVEING_DATA_FAILED,
+	LYRIC_SEARCH_STATUS_LYRIC_UPDATED,
 	LYRIC_SEARCH_STATUS_LAST
 }LyricSearchStatus;
+
+typedef enum{
+	LYRIC_SEARCH_NONE,
+	LYRIC_AUTO_SEARCH,
+	LYRIC_MANUAL_SEARCH,
+	LYRIC_SEARCH_TYPE_LAST
+}LyricSearchType;
 
 struct _LyricSearchClass
 {
 	GObjectClass parent_class;
-	void (*lyric_info_changed)(LyricSearch *lys);
-	void (*lyric_search)(LyricSearch *lys);
-	void (*media_file_changed)(LyricSearch *lys,const gchar *mrl);
+	void (*start_search)(LyricSearch *lys);
+	void (*lyric_listed)(LyricSearch *lys);
+	void (*finished_search)(LyricSearch *lys);
+	void (*status_changed)(LyricSearch *lys);
 	void (*lyric_updated)(LyricSearch *lys,const gchar *lrcpath);
 };
 
@@ -60,11 +73,15 @@ lyric_search_get_lyricfile(LyricSearch *lys);
 void
 lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,const gchar *album);
 
-gboolean
+void
 lyric_search_auto_get_lyric(LyricSearch *lys);
 
 gboolean
 lyric_search_manual_lyric(LyricSearch *lys);
+
+LyricSearchStatus
+lyric_search_get_status(LyricSearch *lys);
+
 
 LyricSearch*
 lyric_search_new(void);

@@ -1,12 +1,10 @@
 
-
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
 #include "LyricDownloader.h"
-
 
 struct _LyricDownloaderPriv
 {
@@ -16,12 +14,14 @@ struct _LyricDownloaderPriv
         gint   in;
         gint   out;
         gint   err;
-        gchar  *out_data;
+        GString  *out_data;
         gchar  *err_data;
     }loaddata;
+    GString *data;
     gint  status;
     gchar *uri;
     gchar *filename;
+    gboolean is_cancel;
 };
 
 enum{
@@ -32,6 +32,18 @@ enum{
 
 guint lyric_down_loader_signals[SIGNAL_LAST] = {0};
 
+
+static void
+lyric_down_loader_finalize(GObject *object);
+
+static void
+lyric_down_loader_gpid_real_cancel(LyricDownloader *ldl);
+
+static void
+lyric_down_loader_gpid_clear(LyricDownloader *ldl);
+
+static void
+lyric_down_loader_clear(LyricDownloader *ldl);
 
 #define LYRIC_DOWNLOADER_GET_PRIVATE(o)   (G_TYPE_INSTANCE_GET_PRIVATE ((o), LYRIC_DOWNLOADER_TYPE, LyricDownloaderPriv))
 
@@ -44,6 +56,8 @@ lyric_down_loader_init(LyricDownloader *ldl)
     ldl->priv = LYRIC_DOWNLOADER_GET_PRIVATE(ldl);
     ldl->priv->uri = NULL;
     ldl->priv->filename = NULL;
+    ldl->priv->is_cancel = FALSE;
+    ldl->priv->data = NULL;
 }
 
 
@@ -51,15 +65,20 @@ static void
 lyric_down_loader_class_init(LyricDownloaderClass *klass)
 {
 
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
+
+    object_class->finalize = lyric_down_loader_finalize;
+    klass->cancel = lyric_down_loader_gpid_real_cancel;
+
     lyric_down_loader_signals[SIGNAL_DONE] = 
         g_signal_new ("done",
             G_TYPE_FROM_CLASS(klass),
             G_SIGNAL_RUN_LAST,
             G_STRUCT_OFFSET(LyricDownloaderClass,done),
             NULL,NULL,
-            g_cclosure_marshal_VOID__STRING,
+            g_cclosure_marshal_VOID__POINTER,
             G_TYPE_NONE,1,
-            G_TYPE_STRING
+            G_TYPE_POINTER
             );
 
     lyric_down_loader_signals[SIGNAL_ERROR] = 
@@ -77,11 +96,26 @@ lyric_down_loader_class_init(LyricDownloaderClass *klass)
 }
 
 static void
+lyric_down_loader_finalize(GObject *object)
+{
+    LyricDownloader *ldl = LYRIC_DOWNLOADER(object);
+
+    lyric_down_loader_clear(ldl);
+}
+
+static void
+lyric_down_loader_gpid_real_cancel(LyricDownloader *ldl)
+{
+    lyric_down_loader_gpid_clear(ldl);
+}
+
+static void
 lyric_down_loader_gpid_clear(LyricDownloader *ldl)
 {
 
     if(ldl->priv->loaddata.pid > 0){
         kill(ldl->priv->loaddata.pid,SIGTERM);
+        ldl->priv->loaddata.pid = 0;
     }
 
     if(ldl->priv->loaddata.err_data){
@@ -89,10 +123,9 @@ lyric_down_loader_gpid_clear(LyricDownloader *ldl)
         ldl->priv->loaddata.err_data = NULL;
     }
     if(ldl->priv->loaddata.out_data){
-        g_free(ldl->priv->loaddata.out_data);
+        g_string_free(ldl->priv->loaddata.out_data,TRUE);
         ldl->priv->loaddata.out_data = NULL;
     }
-    
 }
 
 static void
@@ -106,23 +139,28 @@ lyric_down_loader_clear(LyricDownloader *ldl)
         g_free(ldl->priv->filename);
         ldl->priv->filename = NULL;
     }
+    if(ldl->priv->data){
+        g_string_free(ldl->priv->data,TRUE);
+        ldl->priv->data = NULL;
+    }
     lyric_down_loader_gpid_clear(ldl);
 }
 
 static void
 cmd_child_watch_callback(GPid pid,gint status,LyricDownloader *ldl)
 {
-    gchar *done_data = NULL;
+    GString *done_data = NULL;
     gchar *err_data = NULL;
     if(WIFEXITED(status)){
         if(WEXITSTATUS(status) == 0){
             ldl->priv->status = DONE_OK;
-            done_data = ldl->priv->loaddata.out_data;
+            if(ldl->priv->loaddata.out_data && ldl->priv->loaddata.out_data->len >1)
+                done_data = g_string_new_len(ldl->priv->loaddata.out_data->str,ldl->priv->loaddata.out_data->len);
         }else{
             ldl->priv->status = DOWNLODER_FAILED;
             err_data = ldl->priv->loaddata.err_data;
-            if(err_data == NULL){
-                err_data = ldl->priv->loaddata.out_data;
+            if(err_data == NULL && ldl->priv->loaddata.out_data){
+                err_data = ldl->priv->loaddata.out_data->str;
             }
         }
     }else{
@@ -136,7 +174,9 @@ cmd_child_watch_callback(GPid pid,gint status,LyricDownloader *ldl)
         g_signal_emit(ldl,lyric_down_loader_signals[SIGNAL_ERROR],0,err_data);
     }
 
-    g_signal_emit(ldl,lyric_down_loader_signals[SIGNAL_DONE],0,done_data);
+    if(ldl->priv->is_cancel){
+        done_data = NULL;
+    }
 
     ldl->priv->loaddata.pid = 0;
 
@@ -150,6 +190,8 @@ cmd_child_watch_callback(GPid pid,gint status,LyricDownloader *ldl)
     ldl->priv->loaddata.err = -1;
 
     lyric_down_loader_clear(ldl);
+    ldl->priv->data = done_data;
+    g_signal_emit(ldl,lyric_down_loader_signals[SIGNAL_DONE],0,done_data);
 }
 
 typedef struct
@@ -161,7 +203,6 @@ typedef struct
 static gpointer
 cmd_get_data_thread(CmdThread *ctd)
 {
-    gchar *data = NULL;
     gchar buf[1026] = {0};
     ssize_t n = 0;
     GString *str = NULL;
@@ -174,23 +215,20 @@ cmd_get_data_thread(CmdThread *ctd)
             buf[n+1]=0;
             str = g_string_append(str,buf);
         }else if (n == 0){
-            if(str->len >1){
-                data = g_strdup(str->str);
-            }
             break;
         }else if (n < 0){
             break;
         }
     }
 
-    g_string_free(str,TRUE);
-    str = NULL;
-
-    if (ctd->fd ==  ctd->ldl->priv->loaddata.out){
-        ctd->ldl->priv->loaddata.out_data = data;
-    }else if(ctd->fd == ctd->ldl->priv->loaddata.err){
-        ctd->ldl->priv->loaddata.err_data = data;
+    if(str->len > 1){
+        if (ctd->fd == ctd->ldl->priv->loaddata.out){
+            ctd->ldl->priv->loaddata.out_data = g_string_new_len(str->str,str->len);
+        }else if(ctd->fd == ctd->ldl->priv->loaddata.err){
+            ctd->ldl->priv->loaddata.err_data = g_strdup(str->str);
+        }
     }
+    g_string_free(str,TRUE);
     g_free(ctd);
     return NULL;
 }
@@ -220,12 +258,17 @@ cmd_create_data_thread(LyricDownloader *ldl,gint fd)
 }
 
 void
-lyric_down_loader_get_data(LyricDownloader *ldl,const gchar *uri)
+lyric_down_loader_load(LyricDownloader *ldl,const gchar *uri)
 {
     lyric_down_loader_clear(ldl);
     ldl->priv->uri = g_strdup(uri);
+    ldl->priv->is_cancel = FALSE;
     GError *error = NULL;
-    gchar *cmd[]={"/usr/bin/wget","-t1","-O","-",ldl->priv->uri,NULL};
+    gchar *cmd[]={"/usr/bin/wget",
+                  "-t1",///设置重试次数为 1 (0 代表无限制)。
+                  "-T30",///将所有超时设为 30 秒。
+                  "-O","-",
+                  ldl->priv->uri,NULL};
     if(g_spawn_async_with_pipes(NULL,
                             cmd,NULL,
                             G_SPAWN_SEARCH_PATH|G_SPAWN_DO_NOT_REAP_CHILD,
@@ -236,8 +279,9 @@ lyric_down_loader_get_data(LyricDownloader *ldl,const gchar *uri)
                             &ldl->priv->loaddata.err,
                             &error)){
 
-        if(cmd_create_data_thread(ldl,ldl->priv->loaddata.out));
+        if(cmd_create_data_thread(ldl,ldl->priv->loaddata.out)){
             cmd_create_data_thread(ldl,ldl->priv->loaddata.err);
+        }
 
         g_child_watch_add(ldl->priv->loaddata.pid,
                         (GChildWatchFunc)cmd_child_watch_callback,
@@ -250,6 +294,23 @@ lyric_down_loader_get_data(LyricDownloader *ldl,const gchar *uri)
         error = NULL;
         g_signal_emit(ldl,lyric_down_loader_signals[SIGNAL_DONE],0,NULL);
     }
+    ///g_warning("%s:exit",__FUNCTION__);
+}
+
+void
+lyric_down_loader_cancel(LyricDownloader* ldl)
+{
+    LyricDownloaderClass *klass = LYRIC_DOWNLOADER_GET_CLASS(ldl);
+    ldl->priv->is_cancel = TRUE;
+    if(klass->cancel){
+        klass->cancel(ldl);
+    }
+}
+
+const GString*
+lyric_down_loader_get_data(LyricDownloader* ldl)
+{
+    return (const GString*)ldl->priv->data;
 }
 
 LyricDownloader*
@@ -258,31 +319,36 @@ lyric_down_loader_new(void)
     return LYRIC_DOWNLOADER(g_object_new(LYRIC_DOWNLOADER_TYPE,NULL));
 }
 
-#if 1
+#ifdef _test
+
+#include <stdio.h>
 
 static void
-done_callback(LyricDownloader*ldl,const gchar *data)
+done_callback(LyricDownloader*ldl,const GString *data,GMainLoop *loop)
 {
-    g_printerr("%s\n",data);
+    if(data)
+        fprintf(stderr,"%s\n",data->str);
+    g_main_loop_quit(loop);
 }
 
 static void
 error_callback(LyricDownloader*ldl,const gchar *message)
 {
-    g_printerr("55555555 .....\nSomething is wrong:\n%s\n",message);
+    fprintf(stderr,"55555555 .....\nSomething is wrong:\n%s\n",message);
 }
 
 int main(int argc,char **argv)
 {
     GMainLoop *loop = NULL;
     LyricDownloader* ldl = NULL;
+    gchar *uri = "http://lrcct2.ttplayer.com/dll/lyricsvr.dll?dl?Id=89007&Code=856698280&uid=01&mac=000071372a39";
 
     g_type_init();
     loop = g_main_loop_new(NULL,FALSE);
     ldl = lyric_down_loader_new();
-    g_signal_connect(ldl,"done",G_CALLBACK(done_callback),NULL);
+    g_signal_connect(ldl,"done",G_CALLBACK(done_callback),loop);
     g_signal_connect(ldl,"error",G_CALLBACK(error_callback),NULL);
-    lyric_down_loader_get_data(ldl,argv[1]);
+    lyric_down_loader_load(ldl,uri);
     g_main_loop_run(loop);
     return 0;
 }

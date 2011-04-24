@@ -126,8 +126,8 @@ tt_remove_blankspace_lower(const gchar* src)
 	return s;
 }
 
-GSList*
-tt_parse_lyricslist(gchar* xml)
+static GSList*
+tt_parser_xml(const LyricId *lyricid,const gchar* xml)
 {
 	xmlDoc* doc;
 	xmlNode* root_node;
@@ -182,12 +182,12 @@ tt_parse_lyricslist(gchar* xml)
 }
 
 
-GSList* 
-tt_get_lyrics_list(const LyricId *lyricid)
+static gchar*
+tt_get_uri(const LyricId *lyricid)
 {
 	gchar *artist;
 	gchar *title;
-	GError *error = NULL;
+///	GError *error = NULL;
 
 	artist = lyricid->artist;
 	title = lyricid->title;
@@ -210,25 +210,15 @@ tt_get_lyrics_list(const LyricId *lyricid)
 
 	g_free(art2); //FIXME:
 	g_free(tit2); //FIXME:
-	gchar* xml = lyric_func_get_contents(url,NULL,&error);
-	g_free(url);
 
-	if(error){
-		g_warning("lyric_func_get_contents():%s",error->message);
-		g_error_free(error);
-		error= NULL;
-	}
-
-	GSList *l = tt_parse_lyricslist(xml);
-	g_free(xml);
-
-	return l;
+	return url;
 }
 
 static LyricSearchEngine TtSearchEngine=
 {
 	N_("TT Search"),
-	tt_get_lyrics_list
+	.get_engine_uri = tt_get_uri,
+	.parser = tt_parser_xml
 };
 
 LyricSearchEngine*
@@ -236,3 +226,19 @@ lyric_search_get_tt_engine(void)
 {
 	return &TtSearchEngine;
 }
+
+#ifdef _test
+
+int main(int argc,char **argv)
+{
+    LyricId id={"S.H.E",argv[1],NULL};
+    gchar *uri;
+    GSList *l;
+    LyricSearchEngine *engine;
+    engine = lyric_search_get_tt_engine();
+    uri = engine->get_engine_uri(&id);
+    l = engine->parser(&id,lyric_func_get_contents(uri,0,NULL));
+    lyric_func_lyricid_list(l);
+    return 0;
+}
+#endif

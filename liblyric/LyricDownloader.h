@@ -34,7 +34,7 @@ struct _LyricDownloaderClass
 {
     GObjectClass parent_class;
     void (*error)(LyricDownloader *ldl,const gchar *message);
-    void (*done)(LyricDownloader *ldl,const gchar *data);
+    void (*done)(LyricDownloader *ldl,const GString *data);
     void (*cancel)(LyricDownloader *ldl);
 };
 
@@ -44,5 +44,15 @@ lyric_down_loader_get_type(void);
 
 LyricDownloader*
 lyric_down_loader_new(void);
+
+void
+lyric_down_loader_cancel(LyricDownloader* ldl);
+
+const GString*
+lyric_down_loader_get_data(LyricDownloader* ldl);
+
+void
+lyric_down_loader_load(LyricDownloader *ldl,const gchar *uri);
+
 
 #endif ///__LYIRC_DOWN_LOADER_H
