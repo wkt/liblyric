@@ -78,8 +78,6 @@ enum
 };
 
 enum{
-	START_SEARCH,
-	FINISHED_SEARCH,
 	STATUS_CHANGED,
 	LYRIC_UPDATED,
 	SIGNAL_LAST
@@ -180,24 +178,6 @@ lyric_search_class_init(LyricSearchClass *class)
 	objclass->finalize = lyric_search_finalize;
 	objclass->constructor = lyric_search_constructor;
 
-	LYRIC_SEARCH_SIGNALS[START_SEARCH] = 
-				g_signal_new ("start-search",
-							G_TYPE_FROM_CLASS(class),
-							G_SIGNAL_RUN_LAST,
-							G_STRUCT_OFFSET(LyricSearchClass,start_search),
-							NULL,NULL,
-							g_cclosure_marshal_VOID__VOID,
-							G_TYPE_NONE,0);
-
-	LYRIC_SEARCH_SIGNALS[FINISHED_SEARCH] =
-				g_signal_new ("finished-search",
-							G_OBJECT_CLASS_TYPE(class),
-							G_SIGNAL_RUN_FIRST,
-							G_STRUCT_OFFSET(LyricSearchClass,finished_search),
-							NULL,NULL,
-							g_cclosure_marshal_VOID__VOID,
-							G_TYPE_NONE,0);
-
 	LYRIC_SEARCH_SIGNALS[STATUS_CHANGED] =
 				g_signal_new ("status-changed",
 							G_OBJECT_CLASS_TYPE(class),
@@ -226,7 +206,6 @@ lyric_search_set_status(LyricSearch *lys,LyricSearchStatus lss)
 	if(lys->priv->lss != lss){
 		lys->priv->lss = lss;
 	}
-	g_signal_emit(lys,LYRIC_SEARCH_SIGNALS[STATUS_CHANGED],0);
 	switch(lss){
 		case LYRIC_SEARCH_STATUS_PREPARING:
 		
@@ -249,6 +228,7 @@ lyric_search_set_status(LyricSearch *lys,LyricSearchStatus lss)
 		default:
 		break;
 	}
+    g_signal_emit(lys,LYRIC_SEARCH_SIGNALS[STATUS_CHANGED],0);
 }
 
 LyricSearchStatus
@@ -353,6 +333,14 @@ lyric_search_finalize(GObject *object)
 
 	if(lys->priv->engine)
 		g_slist_free(lys->priv->engine);
+
+    if(lys->lyricfile){
+        g_free(lys->lyricfile);
+    }
+
+    if(lys->lyric_save_to){
+        g_free(lys->lyric_save_to);
+    }
 
 	G_OBJECT_CLASS(lyric_search_parent_class)->finalize(object);
 }
@@ -588,7 +576,6 @@ lyric_search_search_result_parser(LyricSearch *lys,const gchar *data)
 	return lys->engine->parser(&id,data);
 }
 
-
 void
 lyric_search_auto_get_lyric(LyricSearch *lys)
 {
@@ -599,7 +586,6 @@ lyric_search_auto_get_lyric(LyricSearch *lys)
 
 	if(lyric_search_has_local_lyric(lys)){
 		lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES);
-		///fprintf(stderr,"find lyric : %s\n",lys->lyricfile);
 	}else{
 		lyric_search_start_search_lyircid(lys,NULL);
 	}
@@ -621,8 +607,8 @@ lyric_search_manual_get_lyric(LyricSearch *lys)
 		gtk_widget_destroy(msg);
 		return FALSE;
 	}
-	gtk_entry_set_text(lys->artist_entry,lys->artist);
-	gtk_entry_set_text(lys->title_entry,lys->title);
+	gtk_entry_set_text(lys->artist_entry,lys->artist?lys->artist:"");
+	gtk_entry_set_text(lys->title_entry,lys->title?lys->title:"");
 	gtk_entry_set_text(lys->lyric_entry,lys->lyricfile);
 	gtk_widget_set_sensitive(GTK_WIDGET(lys->download_button),FALSE);
 
@@ -673,7 +659,6 @@ lyric_search_load_config(LyricSearch *lys,const gchar *conffile)
 			property_names[PROPERTY_LYRIC_SEARCH_GROUP],
 			property_names[PROPERTY_DEFAULT_ENGINE],
 			NULL);
-
 }
 
 static void
@@ -887,17 +872,6 @@ lyric_search_widget_delete_event(GtkWidget *widget,GdkEvent  *event,LyricSearch 
 	return TRUE;
 }
 
-static void
-lyric_search_mainwin_hide(GtkWidget *widget,LyricSearch *lys)
-{
-	g_warning("main window hide");
-}
-
-static void
-lyric_search_mainwin_show(GtkWidget *widget,LyricSearch *lys)
-{
-	g_warning("main window show");
-}
 
 static void
 lyric_search_engine_box_change(GtkComboBox *engine_box,LyricSearch *lys)
@@ -984,6 +958,7 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 	switch(lss){
 		case LYRIC_SEARCH_STATUS_SEARCHING:
 			if(data == NULL){
+                lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SEARCHING_FAILED);
 				return;
 			}
 			lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SEARCHING_GET_DATA);
@@ -1012,7 +987,10 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 			lyric_func_free_lyricid_list(l);
 		break;
 		case LYRIC_SEARCH_STATUS_DOWNLOADING:
-			
+			if(data == NULL){
+                lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_DOWNLOADING_FAILED);
+				return;
+			}
 			lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_DOWNLOADING_GET_DATA);
 			if(lyric_func_save_data(lys->lyric_save_to,data->str,data->len,NULL)){
 				g_free(lys->lyricfile);
