@@ -1001,7 +1001,7 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 			}
 		break;
 		default:
-			g_warning("%s:should not come to this status(%d) ...",__FUNCTION__,lss);
+			g_warning("%s:should not come to this status(%d):%s ...",__FUNCTION__,lss,data?data->str:"");
 		break;
 	}
 }

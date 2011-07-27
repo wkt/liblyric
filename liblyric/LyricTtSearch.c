@@ -166,7 +166,8 @@ tt_parser_xml(const LyricId *lyricid,const gchar* xml)
 		item->title = (gchar*)xmlGetProp(cur_node, (const xmlChar *)"title");
 		gchar* art_tit = g_strconcat(item->artist, item->title, NULL);
 		item->uri = g_strdup_printf(
-		            "http://lrcct2.ttplayer.com/dll/lyricsvr.dll?dl?Id=%d&Code=%d&uid=01&mac=%012x",
+//		            "http://lrcct2.ttplayer.com/dll/lyricsvr.dll?dl?Id=%d&Code=%d&uid=01&mac=%012x",
+                    "http://ttlrcct.qianqian.com/dll/lyricsvr.dll?dl?Id=%d&Code=%d&uid=01&mac=%012x",
 		            atoi(id), 
 		            tt_CodeFunc(atoi(id), art_tit), 
 		            g_random_int_range(0, 0x7FFFFFFF));
@@ -205,7 +206,8 @@ tt_get_uri(const LyricId *lyricid)
 	g_free(tit1); //FIXME:
 
 	gchar* url = g_strdup_printf( 
-			"http://lrcct2.ttplayer.com/dll/lyricsvr.dll?sh?Artist=%s&Title=%s&Flags=0",
+///			"http://lrcct2.ttplayer.com/dll/lyricsvr.dll?sh?Artist=%s&Title=%s&Flags=0",
+            "http://ttlrcct.qianqian.com/dll/lyricsvr.dll?sh?Artist=%s&Title=%s&Flags=0",
 			art2, tit2);
 
 	g_free(art2); //FIXME:
