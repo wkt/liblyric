@@ -931,7 +931,8 @@ lyric_search_download_button_clicked(GtkButton *button,LyricSearch *lys)
 static void
 lyric_search_close_button_clicked(GtkButton *button,LyricSearch *lys)
 {
-	gtk_widget_hide(GTK_WIDGET(lys->mainwin));
+///	gtk_widget_hide(GTK_WIDGET(lys->mainwin));
+    gtk_window_iconify(GTK_WINDOW(lys->mainwin));
 
 }
 
@@ -1008,7 +1009,8 @@ lyric_search_lyricview_update(LyricSearch *lys,GSList *search_result)
 static gboolean
 lyric_search_widget_delete_event(GtkWidget *widget,GdkEvent  *event,LyricSearch *lys)
 {
-	gtk_widget_hide(widget);
+///	gtk_widget_hide(widget);
+    gtk_window_iconify(GTK_WINDOW(widget));
 	return TRUE;
 }
 
@@ -1195,6 +1197,7 @@ int main(int argc,char **argv)
 	lyric_search_set_info(lys,"S.H.E",argv[1],NULL);
 	///lyric_search_auto_get_lyric(lys);
 	lyric_search_manual_get_lyric(lys);
+    g_signal_connect(lys->mainwin,"delete-event",G_CALLBACK(gtk_main_quit),NULL);
 	gtk_main();
 	return 0;
 }
