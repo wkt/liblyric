@@ -40,4 +40,7 @@ lyric_func_free_lyricid_list(GSList *list);
 void
 lyric_func_lyricid_list(GSList *l);
 
+gchar **
+lyric_func_strv_dup(gchar **strv);
+
 #endif ///__LYRIC_FUNC_H

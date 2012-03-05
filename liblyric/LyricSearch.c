@@ -5,19 +5,29 @@
 #include "LyricSogouSearch.h"
 #include "LyricDownloader.h"
 
+static const gchar *default_search_paths[]={"~/Lyric",".",NULL};
+static const gchar *default_lyric_format_array[]={"%a-%t","%n",NULL};
+static const gchar *default_lyric_dir="~/Lyric";
+static const gchar *default_lyric_name_format = "%a-%t@%n";
+
 struct _LyricSearch
 {
 	GObject parent;
 	gchar *artist;
 	gchar *title;
 	gchar *album;
-	gchar *mrl;      ///media locations
-	gchar *filename; ///basename
-	gchar *mediadir;  ///dirname
-	gchar **search_paths;   ///Search paths
-	gchar **lyric_format_array;    ///lyric name format
-	gchar *lyricfile;  ///path to load lyric
-	gchar *lyric_save_to;
+	gchar *mrl;             ///media locations
+
+	gchar *media_name;        ///basename
+	gchar *mediadir;        ///dirname
+
+	gchar **search_paths;           ///Search paths
+	gchar **lyric_format_array;     ///lyric name format
+    gchar *lyric_dir;
+    gchar *lyric_name_format;
+
+	gchar *lyricfile;               ///path to load lyric
+    gchar *lyricfile_w;
 
 	GtkDialog   *mainwin;
 	GtkComboBox *engine_box;
@@ -100,8 +110,8 @@ enum{
 
 static const gchar *property_names[PROPERTY_LAST_ALL+1]=
 {
-	[PROPERTY_LYRIC_NAME_FMT]="lyric_fmtv",
-	[PROPERTY_LYRIC_PATH_LIST]="search_pathv",
+	[PROPERTY_LYRIC_NAME_FMT]="lyric_fmts",
+	[PROPERTY_LYRIC_PATH_LIST]="search_paths",
 	[PROPERTY_DEFAULT_ENGINE]="default_engine",
 	[PROPERTY_LYRIC_SEARCH_GROUP]="lyric_search",
 	[PROPERTY_LAST_ALL] = NULL
@@ -117,6 +127,9 @@ lyric_search_finalize(GObject *object);
 
 static void
 lyric_search_set_status(LyricSearch *lys,LyricSearchStatus lss);
+
+static void
+lyric_search_make_lyricfile(LyricSearch *lys);
 
 static void
 lyric_search_save_config(LyricSearch *lys);
@@ -252,7 +265,7 @@ lyric_search_constructor(GType type,
 	ui_xml = "/home/wkt/projects/lyricsearch/data/download.glade";
 
 	if(!g_file_test(ui_xml,G_FILE_TEST_EXISTS))
-		ui_xml = UIDIR"/download.glae";
+		ui_xml = UIDIR "/download.glae";
 
 	///g_debug("%s:coming",__func__);
 
@@ -324,23 +337,35 @@ lyric_search_finalize(GObject *object)
 	if(lys->default_engine)
 		g_free(lys->default_engine);
 
+    if(lys->media_name)
+        g_free(lys->media_name);
+
+    if(lys->mediadir)
+        g_free(lys->mediadir);
+
 	if(lys->lyric_format_array){
 		g_strfreev(lys->lyric_format_array);
 	}
+    
+    if(lys->lyric_name_format)
+        g_free(lys->lyric_name_format);
+
+    if(lys->lyric_dir)
+        g_free(lys->lyric_dir);
 
 	if(lys->search_paths)
 		g_strfreev(lys->search_paths);
-
-	if(lys->priv->engine)
-		g_slist_free(lys->priv->engine);
 
     if(lys->lyricfile){
         g_free(lys->lyricfile);
     }
 
-    if(lys->lyric_save_to){
-        g_free(lys->lyric_save_to);
+    if(lys->lyricfile_w){
+        g_free(lys->lyricfile_w);
     }
+
+	if(lys->priv->engine)
+		g_slist_free(lys->priv->engine);
 
 	G_OBJECT_CLASS(lyric_search_parent_class)->finalize(object);
 }
@@ -375,50 +400,43 @@ lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,co
 			lys->album = NULL;
 		}
 	}
-	lyric_search_lyric_set_lyric_paths(lys);
+    lyric_search_make_lyricfile(lys);
 }
 
 void
 lyric_search_set_mrl(LyricSearch *lys,const gchar *mrl)
 {
-	gchar *path = NULL;
 	gint i =0;
+    gchar *path = NULL;
 
 	g_free(lys->mrl);
-	g_free(lys->filename);
+	g_free(lys->media_name);
 	g_free(lys->mediadir);
 
 	lys->mrl = NULL;
-	lys->filename = NULL;
+	lys->media_name = NULL;
 	lys->mediadir = NULL;
 
 	if(mrl){
 		lys->mrl = g_strdup(mrl);
-		path = g_filename_from_uri(mrl,NULL,NULL);
+        if(!g_path_is_absolute(mrl))
+        {
+            path = g_filename_from_uri(mrl,NULL,NULL);
+        }else{
+            path = g_strdup(mrl);
+        }
 		//g_debug("path:%s",path);
 		if(path){
-			lys->filename = g_path_get_basename(path);
+			lys->media_name = g_path_get_basename(path);
 			lys->mediadir = g_path_get_dirname(path);
 			g_free(path);
-		}
-	}
-
-	path = lys->filename;
-	if(path){
-		gsize len = 0;
-		len = strlen(path);
-		for(i=len;len-i<5 && len-i>1;i--){
-			if(path[i] == '.'){
-				path[i] = 0;
-				break;
-			}
 		}
 	}
 
 	if(lys->mediadir == NULL){
 		lys->mediadir = g_build_filename(g_get_home_dir(),"Lyric",NULL);
 	}
-	lyric_search_lyric_set_lyric_paths(lys);
+    lyric_search_make_lyricfile(lys);
 }
 
 static gchar *
@@ -445,8 +463,8 @@ lyric_search_fmt_string(LyricSearch *lys,const gchar *fmt)
 				str = g_string_append(str,lys->album);
 				pt++;
 			break;
-			case 'f'://filename
-				str = g_string_append(str,lys->filename);
+			case 'n'://filename
+				str = g_string_append(str,lys->media_name);
 				pt++;
 			break;
 			case 'd'://directory media file
@@ -459,13 +477,98 @@ lyric_search_fmt_string(LyricSearch *lys,const gchar *fmt)
 			}
 		}else if(*pt == '~'){
 			str = g_string_append(str,g_get_home_dir());
-		}else{
+		}else if(*pt == '.'){
+            str = g_string_append(str,lys->mediadir);
+        }else{
 			str = g_string_append_c(str,*pt);
 		}
 	}
 	pt = str->str;
 	g_string_free(str,FALSE);
 	return pt;
+}
+
+static void
+lyric_search_make_lyricfile(LyricSearch *lys)
+{
+    gchar *lyric_name;
+    gchar *lyricfile;
+    gboolean diff_w = FALSE;
+
+    g_free(lys->lyricfile);
+    g_free(lys->lyricfile_w);
+    lys->lyricfile_w = NULL;
+    lys->lyricfile = NULL;
+
+    if(lys->lyric_dir == NULL)
+    {
+        lyric_search_set_lyric_dir(lys,default_lyric_dir);
+    }
+
+    if(lys->lyric_name_format)
+    {
+        lyric_name = lyric_search_fmt_string(lys,lys->lyric_name_format);
+    }else{
+        lyric_name = lyric_search_fmt_string(lys,default_lyric_name_format);
+    }
+    lyricfile = g_strdup_printf("%s%c%s.lrc",lys->lyric_dir,G_DIR_SEPARATOR,lyric_name);
+    if(g_file_test(lyricfile,G_FILE_TEST_EXISTS))
+    {
+        lys->lyricfile = g_strdup(lyricfile);
+    }else{
+        gchar **search_paths = lys->search_paths;
+        gchar **lyric_format_array = lys->lyric_format_array;
+        gint i = 0;
+        gint j = 0;
+        gchar *path;
+        gchar *t_lyricfile;
+        if(search_paths == NULL||search_paths[0] == NULL)
+        {
+            search_paths = default_search_paths;
+        }
+        if(lyric_format_array == NULL||lyric_format_array[0] == NULL)
+        {
+            lyric_format_array = default_lyric_format_array;
+        }
+        for(i=0;search_paths[i];i++)
+        {
+            path = lyric_search_fmt_string(lys,search_paths[i]);
+            t_lyricfile = g_strdup_printf("%s%c%s.lrc",path,G_DIR_SEPARATOR,lyric_name);
+            if(g_file_test(t_lyricfile,G_FILE_TEST_IS_REGULAR))
+            {
+                lys->lyricfile = g_strdup(t_lyricfile);
+                if(g_access(t_lyricfile,W_OK) == 0)
+                {
+                    lys->lyricfile_w = g_strdup(t_lyricfile);
+                }
+                break;
+            }
+            g_free(t_lyricfile);
+            for(j=0;lyric_format_array[j];j++)
+            {
+                t_lyricfile = g_strdup_printf("%s%c%s.lrc",path,G_DIR_SEPARATOR,lyric_format_array[j]);
+                if(g_file_test(t_lyricfile,G_FILE_TEST_IS_REGULAR))
+                {
+                    lys->lyricfile = g_strdup(t_lyricfile);
+                    if(g_access(t_lyricfile,W_OK) == 0)
+                    {
+                        lys->lyricfile_w = g_strdup(t_lyricfile);
+                    }
+                    break;
+                }
+                g_free(t_lyricfile);
+            }
+            if(lys->lyricfile)
+                break;
+            g_free(path);
+        }
+    }
+    if(lys->lyricfile_w == NULL)
+    {
+        lys->lyricfile_w = g_strdup(lyricfile);
+    }
+    g_free(lyricfile);
+    g_free(lyric_name);
 }
 
 gboolean
@@ -475,7 +578,43 @@ lyric_search_has_local_lyric(LyricSearch *lys)
 }
 
 void
-lyric_search_lyric_set_lyric_paths(LyricSearch *lys)
+lyric_search_set_search_paths(LyricSearch *lys,gchar **search_paths)
+{
+    g_strfreev(lys->search_paths);
+    lys->search_paths = lyric_func_strv_dup(search_paths);
+}
+
+void
+lyric_search_set_lyric_foramt_array(LyricSearch *lys,gchar **formats)
+{
+    g_strfreev(lys->lyric_format_array);
+    lys->lyric_format_array = lyric_func_strv_dup(formats);
+}
+
+void
+lyric_search_set_lyric_name_format(LyricSearch *lys,gchar *lyric_name_format)
+{
+    g_free(lys->lyric_name_format);
+    lys->lyric_name_format = g_strdup(lyric_name_format);
+}
+
+gboolean
+lyric_search_set_lyric_dir(LyricSearch *lys,const gchar *lyric_dir)
+{
+    gboolean res;
+    g_free(lys->lyric_dir);
+    lys->lyric_dir = lyric_search_fmt_string(lys,lyric_dir);
+    res = g_mkdir_with_parents(lys->lyric_dir,0744) == 0;
+    if(!res)
+    {
+        lyric_search_set_lyric_dir(lys,"~/Lyric");
+    }
+    return res;
+}
+
+#if 0
+void
+lyric_search_set_lyric_paths(LyricSearch *lys)
 {
 	gboolean has_lyric = FALSE;
 	gboolean has_lyric_save = FALSE;
@@ -539,6 +678,7 @@ lyric_search_lyric_set_lyric_paths(LyricSearch *lys)
 	}
 	///g_debug("lyricfile:%s,lyric_save_to:%s",lys->lyricfile ,lys->lyric_save_to);
 }
+#endif
 
 void
 lyric_search_set_engine(LyricSearch *lys,LyricSearchEngine* engine)
@@ -609,7 +749,7 @@ lyric_search_manual_get_lyric(LyricSearch *lys)
 	}
 	gtk_entry_set_text(lys->artist_entry,lys->artist?lys->artist:"");
 	gtk_entry_set_text(lys->title_entry,lys->title?lys->title:"");
-	gtk_entry_set_text(lys->lyric_entry,lys->lyricfile);
+	gtk_entry_set_text(lys->lyric_entry,lys->lyricfile_w);
 	gtk_widget_set_sensitive(GTK_WIDGET(lys->download_button),FALSE);
 
 	gtk_window_present(lys->mainwin);
@@ -992,9 +1132,9 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 				return;
 			}
 			lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_DOWNLOADING_GET_DATA);
-			if(lyric_func_save_data(lys->lyric_save_to,data->str,data->len,NULL)){
+			if(lyric_func_save_data(lys->lyricfile_w,data->str,data->len,NULL)){
 				g_free(lys->lyricfile);
-				lys->lyricfile = g_strdup(lys->lyric_save_to);
+				lys->lyricfile = g_strdup(lys->lyricfile_w);
 				lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_LYRIC_UPDATED);
 			}else{
 				lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SAVEING_DATA_FAILED);

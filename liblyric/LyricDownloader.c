@@ -313,6 +313,12 @@ lyric_down_loader_get_data(LyricDownloader* ldl)
     return (const GString*)ldl->priv->data;
 }
 
+void
+lyric_down_loader_get_status(LyricDownloader* ldl)
+{
+    return ldl->priv->status;
+}
+
 LyricDownloader*
 lyric_down_loader_new(void)
 {

@@ -152,3 +152,22 @@ lyric_func_lyricid_list(GSList *l)
 		fprintf(stdout,"------------------------\n");
 	}
 }
+
+
+gchar **
+lyric_func_strv_dup(gchar **strv)
+{
+    gint len = 0;
+    gint i = 0;
+    gchar **ssvv = NULL;
+    if(strv == NULL)
+        return NULL;
+    len = g_strv_length(strv);
+    ssvv = g_new0(gchar *,len+1);
+    for(i=0;i<len;i++)
+    {
+        ssvv[i]=g_strdup(strv[i]);
+        ssvv[i+1] = NULL;
+    }
+    return ssvv;
+}
