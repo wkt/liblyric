@@ -162,7 +162,12 @@ lyric_line_free(LyricLine *ll)
 static gint
 cmpfunc(LyricLine *a,LyricLine *b)
 {
-    
+    if(a == b)
+        return 0;
+    if(a == NULL)
+        return -1;
+    if(b == NULL)
+        return 1;
     if(a->time == b->time)
         return 0;
     if(a->time > b->time)
@@ -172,21 +177,56 @@ cmpfunc(LyricLine *a,LyricLine *b)
     return 0;
 }
 
+const gchar*
+lyric_line_tag(const gchar *s,gchar **next)
+{
+    gchar *r = NULL;
+    gchar *pt = (gchar*)s;
+    if(pt[0] == '[')
+    {
+        gchar *t = NULL;
+        pt++;
+        t = pt;
+        do{
+            if(*pt == ']')
+            {
+                r = t;
+                *pt = 0;
+                pt++;
+                if(next)*next = pt;
+                break;
+            }
+            pt++;
+        }while(*pt);
+    }
+    return r;
+}
+
+gint64
+lyric_line_tag_time(const gchar *tag)
+{
+    gint64 t = 0;
+    t = g_ascii_strtoll(tag,NULL,10)*60*1000;
+    t = t+g_ascii_strtod(tag+3,NULL)*1000;
+    return t;
+}
+
 LyricInfo *
 lyric_read(const gchar *filename)
 {
     GList *_ret = NULL;
     GList *l = NULL;
     GList *times = NULL;
-    LyricLine *ll = NULL;
     FILE *fp;
     size_t n;
     char *line = NULL;
     char *pt;
-    gchar *li = NULL;
+    gchar *tmp_str = NULL;
+    gchar *next_pt = NULL;
+    gint64 *time_pt = NULL;
     goffset fset = 0;
-    gint lcn = 0;
     LyricInfo *lyricinfo = NULL;
+    LyricLine *ll = NULL;
 
     fp = fopen(filename,"r");
     if(fp == NULL){
@@ -198,61 +238,39 @@ lyric_read(const gchar *filename)
     lyricinfo->content_free = lyric_line_free_list;
 
     while(getline(&line,&n,fp) != -1){
+        fprintf(stderr,line);
         pt = g_strstrip(line);
-        li = NULL;
-        if(pt[0] == '['){
-            if(g_ascii_strncasecmp(pt+1,"ti:",3) == 0){
-                lyricinfo->title = g_strdup(pt+4);
-                li = lyricinfo->title;
-            }else if(g_ascii_strncasecmp(pt+1,"ar:",3) == 0){
-                lyricinfo->artist = g_strdup(pt+4);
-                li = lyricinfo->artist;
-            }else if(g_ascii_strncasecmp(pt+1,"al:",3) == 0){
-                lyricinfo->album = g_strdup(pt+4);
-                li = lyricinfo->album;
-            }else if(g_ascii_strncasecmp(pt+1,"by:",3) == 0){
-                lyricinfo->author = g_strdup(pt+4);
-                li = lyricinfo->author;
+        next_pt = pt;
+        while(pt[0] == '['){
+            tmp_str = lyric_line_tag(pt,&next_pt);
+            if(tmp_str == NULL)
+                break;
+            if(g_ascii_strncasecmp("ti:",tmp_str,3) == 0){
+                lyricinfo->title = g_strdup(tmp_str+3);
+            }else if(g_ascii_strncasecmp("ar:",tmp_str,3) == 0){
+                lyricinfo->artist = g_strdup(tmp_str+3);
+            }else if(g_ascii_strncasecmp("al:",tmp_str,3) == 0){
+                lyricinfo->album = g_strdup(tmp_str+3);
+            }else if(g_ascii_strncasecmp("by:",tmp_str,3) == 0){
+                lyricinfo->author = g_strdup(tmp_str+3);
             }else if(isdigit(pt[1])){
-                pt++;
-                lcn = 1;
-                while(*pt && lcn == 1){
-                    gint64 *t;
-                    lcn = 0;
-                    t = g_new0(gint64,1);
-                    *t = atoll(pt)*60*1000;
-                    while(*pt){
-                        pt++;
-                        if(*pt == ':'){
-                            pt ++;
-                            *t = *t + atof(pt)*1000;
-                            lcn = 0;
-                        }else if(*pt == ']'){
-                            fset = pt-line+1;
-                            pt++;
-                            if(*pt =='[' && isdigit(*(pt+1))){
-                                lcn = 1;
-                                pt++;
-                            }
-                            times = g_list_append(times,t);
-                            break;
-                        }
-                    }
-                }
+                pt = next_pt;
+                time_pt = g_new0(gint64,1);
+                *time_pt = lyric_line_tag_time(tmp_str);
+                times = g_list_append(times,time_pt);
+            }else{
+                break;
             }
         }
-        if(li){
-            size_t len = strlen(li)-1;
-            if(len >0 && li[len] == ']')
-                li[len]='\0';
-        }
+
         for(l= times;l;l=l->next){
+            time_pt = (gint64*)l->data;
             ll = g_new0(LyricLine,1);
-            ll->time = l->data?*((gint64*)l->data):0;
-            ll->line = g_strdup(line+fset);
+            ll->time = time_pt?*time_pt:0;
+            ll->line = g_strdup(next_pt);
+///            fprintf(stderr,"time:%d,line:%s,next_pt:%s\n",ll->time,ll->line,next_pt);
             _ret = g_list_append(_ret,ll);
         }
-        li = NULL;
         g_list_foreach(times,(GFunc)g_free,NULL);
         g_list_free(times);
         times = NULL;
@@ -296,7 +314,7 @@ lyric_line_list(GList *l)
     LyricLine *ll;
     for(;l;l=l->next){
         ll=l->data;
-        fprintf(stderr,"%-6lld->%s\n",ll->time,ll->line);
+        fprintf(stderr,"%-6ld->%s\n",ll->time,ll->line);
     }
 }
 
@@ -314,7 +332,7 @@ lyric_info_show(LyricInfo *info)
         fprintf(stdout,"album:%s\n",info->album);
     if(info->author)
         fprintf(stdout,"author:%s\n",info->author);
-    fprintf(stdout,"offset:%llu\n",info->offset);
+    fprintf(stdout,"offset:%lu\n",info->offset);
     lyric_line_list(info->content);
 }
 
