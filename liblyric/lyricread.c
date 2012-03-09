@@ -238,7 +238,7 @@ lyric_read(const gchar *filename)
     lyricinfo->content_free = lyric_line_free_list;
 
     while(getline(&line,&n,fp) != -1){
-        fprintf(stderr,line);
+///        fprintf(stderr,line);
         pt = g_strstrip(line);
         next_pt = pt;
         while(pt[0] == '['){

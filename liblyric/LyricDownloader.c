@@ -153,7 +153,7 @@ cmd_child_watch_callback(GPid pid,gint status,LyricDownloader *ldl)
     gchar *err_data = NULL;
     if(WIFEXITED(status)){
         if(WEXITSTATUS(status) == 0){
-            ldl->priv->status = DONE_OK;
+            ldl->priv->status = DOWNLODER_DONE_OK;
             if(ldl->priv->loaddata.out_data && ldl->priv->loaddata.out_data->len >1)
                 done_data = g_string_new_len(ldl->priv->loaddata.out_data->str,ldl->priv->loaddata.out_data->len);
         }else{
@@ -244,7 +244,7 @@ cmd_create_data_thread(LyricDownloader *ldl,gint fd)
     ctd->fd = fd;
     g_thread_create((GThreadFunc)cmd_get_data_thread,ctd,FALSE,&error);
     if(error){
-        ldl->priv->status = CREATE_THREAD_FAILED;
+        ldl->priv->status = DOWNLODER_CREATE_THREAD_FAILED;
 
         g_signal_emit(ldl,lyric_down_loader_signals[SIGNAL_ERROR],0,error->message);
         g_error_free(error);
@@ -288,7 +288,7 @@ lyric_down_loader_load(LyricDownloader *ldl,const gchar *uri)
                         ldl);
         
     }else{
-        ldl->priv->status = RUN_CMDMAND_FAILD;
+        ldl->priv->status = DOWNLODER_RUN_CMDMAND_FAILD;
         g_signal_emit(ldl,lyric_down_loader_signals[SIGNAL_ERROR],0,error->message);
         g_error_free(error);
         error = NULL;
@@ -313,7 +313,7 @@ lyric_down_loader_get_data(LyricDownloader* ldl)
     return (const GString*)ldl->priv->data;
 }
 
-void
+DownloaderStatus
 lyric_down_loader_get_status(LyricDownloader* ldl)
 {
     return ldl->priv->status;

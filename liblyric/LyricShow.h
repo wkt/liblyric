@@ -15,21 +15,25 @@ typedef struct _LyricShowIface LyricShowIface;
 struct _LyricShowIface
 {
     GTypeInterface g_iface;
-    const gchar *(*label)(LyricShow *lsw);
+    const gchar *(*get_name)(LyricShow *lsw);
     void (*set_time)(LyricShow *lsw,guint64 time);
     void (*set_lyric)(LyricShow *lsw,const gchar *lyric_file);
+    void (*set_text)(LyricShow *lsw,const gchar *text);
 };
 
 GType
 lyric_show_get_type(void);
 
-const gchar *lyric_show_get_label(LyricShow *lsw);
+const gchar *
+lyric_show_get_name(LyricShow *lsw);
 
-void lyric_show_set_time(LyricShow *lsw,guint64 time);
+void
+lyric_show_set_time(LyricShow *lsw,guint64 time);
 
-void lyric_show_set_lyric(LyricShow *lsw,const gchar *lyric_file);
+void
+lyric_show_set_lyric(LyricShow *lsw,const gchar *lyric_file);
 
-GtkWidget*
-lyric_show_tree_view_new(void);
+void
+lyric_show_set_text(LyricShow *lsw,const gchar *text);
 
 #endif ///LYRIC_SHOW_IFACE_H

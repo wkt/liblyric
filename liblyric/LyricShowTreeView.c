@@ -247,7 +247,7 @@ static void
 lyric_show_iface_interface_init(LyricShowIface *iface)
 {
     
-    iface->label = lyric_show_tree_view_label;
+    iface->get_name = lyric_show_tree_view_label;
     iface->set_time = lyric_show_tree_view_set_time;
     iface->set_lyric = lyric_show_tree_view_set_lyric;
 }

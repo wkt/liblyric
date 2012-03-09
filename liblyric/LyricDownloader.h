@@ -16,13 +16,14 @@ typedef struct _LyricDownloaderPriv LyricDownloaderPriv;
 typedef struct _LyricDownloader LyricDownloader;
 typedef struct _LyricDownloaderClass LyricDownloaderClass;
 
-enum{
-    DONE_OK = 0,
-    RUN_CMDMAND_FAILD = 1,
-    CREATE_THREAD_FAILED,
+typedef enum
+{
+    DOWNLODER_DONE_OK = 0,
+    DOWNLODER_RUN_CMDMAND_FAILD = 1,
+    DOWNLODER_CREATE_THREAD_FAILED,
     DOWNLODER_FAILED,
     DOWNLODER_UNKNOWN
-};
+}DownloaderStatus;
 
 struct _LyricDownloader
 {
