@@ -202,11 +202,11 @@ lyric_line_tag(const gchar *s,gchar **next)
     return r;
 }
 
-gint64
+guint64
 lyric_line_tag_time(const gchar *tag)
 {
     gint64 t = 0;
-    t = g_ascii_strtoll(tag,NULL,10)*60*1000;
+    t = g_ascii_strtoull(tag,NULL,10)*60*1000;
     t = t+g_ascii_strtod(tag+3,NULL)*1000;
     return t;
 }
@@ -238,7 +238,6 @@ lyric_read(const gchar *filename)
     lyricinfo->content_free = lyric_line_free_list;
 
     while(getline(&line,&n,fp) != -1){
-///        fprintf(stderr,line);
         pt = g_strstrip(line);
         next_pt = pt;
         while(pt[0] == '['){
@@ -268,7 +267,6 @@ lyric_read(const gchar *filename)
             ll = g_new0(LyricLine,1);
             ll->time = time_pt?*time_pt:0;
             ll->line = g_strdup(next_pt);
-///            fprintf(stderr,"time:%d,line:%s,next_pt:%s\n",ll->time,ll->line,next_pt);
             _ret = g_list_append(_ret,ll);
         }
         g_list_foreach(times,(GFunc)g_free,NULL);
@@ -283,11 +281,17 @@ lyric_read(const gchar *filename)
     return lyricinfo;
 }
 
-const gchar *
+const LyricLine*
 lyric_info_get_line(LyricInfo *info,gsize n)
 {
-    LyricLine *ll = g_list_nth_data(info->content,n);
-    return (const gchar*)ll->line;
+    const LyricLine *ll = g_list_nth_data(info->content,n);
+    return ll;
+}
+
+gsize
+lyric_info_get_n_lines(LyricInfo *info)
+{
+    return g_list_length(info->content);
 }
 
 static void

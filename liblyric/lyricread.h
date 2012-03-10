@@ -13,7 +13,7 @@ typedef struct _LyricLine LyricLine;
 
 struct _LyricLine
 {
-    gint64 time;
+    guint64 time;
     gchar  *line;
 };
 
@@ -58,7 +58,10 @@ lyric_read(const gchar *filename);
 void
 lyric_info_free(LyricInfo *info);
 
-const gchar *
+const LyricLine*
 lyric_info_get_line(LyricInfo *info,gsize n);
+
+gsize
+lyric_info_get_n_lines(LyricInfo *info);
 
 #endif ///LYRIC_LINE_H
