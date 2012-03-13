@@ -439,6 +439,15 @@ lyric_search_set_mrl(LyricSearch *lys,const gchar *mrl)
     lyric_search_make_lyricfile(lys);
 }
 
+/***
+ * %t title
+ * %a artist
+ * %b album
+ * %n filename
+ * %d media directory
+ * ~  user home
+ * . same as %d
+ * */
 static gchar *
 lyric_search_fmt_string(LyricSearch *lys,const gchar *fmt)
 {

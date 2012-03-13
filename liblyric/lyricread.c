@@ -318,7 +318,7 @@ lyric_line_list(GList *l)
     LyricLine *ll;
     for(;l;l=l->next){
         ll=l->data;
-        fprintf(stderr,"%-6ld->%s\n",ll->time,ll->line);
+        fprintf(stdout,"%-6ld->%s\n",ll->time,ll->line);
     }
 }
 

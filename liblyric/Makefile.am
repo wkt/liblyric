@@ -29,6 +29,9 @@ liblyric_la_SOURCES =                       \
                 lyricread.c                 \
                 LyricDownloader.c           \
                 LyricDownloader.h           \
+                lyriclinewidget.c  			\
+                lyriclinewidget.h			\
+                lyricshowviewport.c  		\
                 $(NULL)
 
 #                LyricSogouSearch.c          \
@@ -42,6 +45,7 @@ lyricinc_HEADERS =  LyricSearch.h       \
                     LyricShow.h         \
                     LyricFunc.h         \
                     LibLyric.h          \
+					lyricshowviewport.h			\
                     $(NULL)
 
 liblyric_la_LDFLAGS = -module $(CURL_LIBS) $(GTK_LIBS) $(LIBXML2_LIBS) $(libtool_opts)
