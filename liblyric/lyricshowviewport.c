@@ -179,12 +179,6 @@ lyric_show_viewport_constructor(GType                  type,
     gtk_widget_show_all(hbox);
     gtk_container_add(GTK_CONTAINER(lsv),hbox);
 
-/*    GdkColor color;
-    gdk_color_parse("blue",&color);
-    gtk_widget_modify_fg(GTK_WIDGET(lsv),GTK_STATE_ACTIVE,&color);
-    gtk_widget_modify_bg(GTK_WIDGET(lsv),GTK_STATE_ACTIVE,&color);
-    gtk_widget_modify_base(GTK_WIDGET(lsv),GTK_STATE_ACTIVE,&color);
-*/
     return object;
 }
 
@@ -352,7 +346,7 @@ lyric_show_viewport_button_release(GtkWidget    *widget,GdkEventButton *event)
 
     lyric_show_viewport_update_cursor(lsv);
     lyric_show_time_request(LYRIC_SHOW(lsv),t);
-    lyric_show_viewport_update_current_widget(lsv);
+///    lyric_show_viewport_update_current_widget(lsv);
 
 ///    GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->button_release_event(widget,event);
     return FALSE;
@@ -371,7 +365,7 @@ lyric_show_viewport_motion_notify(GtkWidget *widget,GdkEventMotion *event)
     tmp_pos = lsv->priv->pressed_y - y;
     if(tmp_pos + lsv->priv->pos > 0)
     {
-        if(tmp_pos + lsv->priv->pos > lsv->priv->lyricbox->allocation.height)
+        if(tmp_pos + lsv->priv->pos >= lsv->priv->lyricbox->allocation.height)
             tmp_pos = lsv->priv->lyricbox->allocation.height-lsv->priv->pos-1;
     }else{
         tmp_pos = -lsv->priv->pos;
