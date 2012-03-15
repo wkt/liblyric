@@ -36,6 +36,9 @@ struct _LyricShowViewportPrivate
     LyricInfo   *info;
     guint64     current_time;
     gint        pos;
+    gint        pressed_pos;
+    gint        pressed_y;
+    gboolean    is_pressed;
     GtkWidget   *current_widget;
     GtkWidget   *lyricbox;
     GtkWidget   *msg;
@@ -70,8 +73,26 @@ lyric_show_viewport_size_allocate(GtkWidget *widget,GtkAllocation *allocation);
 static gboolean
 lyric_show_viewport_expose(GtkWidget    *widget,GdkEventExpose *event);
 
+static gboolean
+lyric_show_viewport_button_press(GtkWidget    *widget,GdkEventButton *event);
+
+static gboolean
+lyric_show_viewport_button_release(GtkWidget    *widget,GdkEventButton *event);
+
+static gboolean
+lyric_show_viewport_motion_notify(GtkWidget *widget,GdkEventMotion *event);
+
+static void
+lyric_show_viewport_update_cursor(LyricShowViewport *lsv);
+
+static void
+lyric_show_viewport_update_current_widget(LyricShowViewport *lsv);
+
 static void
 lyric_show_viewport_set_time(LyricShow *iface,guint64 time);
+
+static guint64
+lyric_show_viewport_get_requested_time(LyricShowViewport *lsv);
 
 static void
 lyric_show_viewport_iface_interface_init(LyricShowIface *iface);
@@ -100,6 +121,11 @@ lyric_show_viewport_class_init(LyricShowViewportClass *klass)
 
     widget_class->expose_event = lyric_show_viewport_expose;
 
+    widget_class->button_release_event = lyric_show_viewport_button_release;
+    widget_class->button_press_event = lyric_show_viewport_button_press;
+
+    widget_class->motion_notify_event   = lyric_show_viewport_motion_notify;
+
     g_object_class_install_property(object_class,
                                     PROP_TIME,
                                     g_param_spec_uint64("time",
@@ -122,6 +148,10 @@ lyric_show_viewport_init(LyricShowViewport *lsv)
     lsv->priv = LYRIC_SHOW_VIEWPORT_GET_PRIVATE(lsv);
     gtk_widget_set_redraw_on_allocate(GTK_WIDGET(lsv),TRUE);
     gtk_container_set_resize_mode (GTK_CONTAINER (lsv), GTK_RESIZE_PARENT);
+    gtk_widget_add_events(GTK_WIDGET(lsv),
+                            GDK_BUTTON_PRESS_MASK|
+                            GDK_BUTTON_RELEASE_MASK|
+                            GDK_BUTTON1_MOTION_MASK);
 }
 
 
@@ -148,6 +178,13 @@ lyric_show_viewport_constructor(GType                  type,
     gtk_widget_set_no_show_all(lsv->priv->msg,TRUE);
     gtk_widget_show_all(hbox);
     gtk_container_add(GTK_CONTAINER(lsv),hbox);
+
+/*    GdkColor color;
+    gdk_color_parse("blue",&color);
+    gtk_widget_modify_fg(GTK_WIDGET(lsv),GTK_STATE_ACTIVE,&color);
+    gtk_widget_modify_bg(GTK_WIDGET(lsv),GTK_STATE_ACTIVE,&color);
+    gtk_widget_modify_base(GTK_WIDGET(lsv),GTK_STATE_ACTIVE,&color);
+*/
     return object;
 }
 
@@ -230,15 +267,17 @@ lyric_show_viewport_size_allocate(GtkWidget *widget,GtkAllocation *allocation)
             allocation->width,allocation->height);
 #endif
     gtk_adjustment_set_lower(adj,-allocation->height);
-    gtk_adjustment_set_value(adj,lsv->priv->pos-allocation->height/2.0);
+    gtk_adjustment_set_value(adj,(lsv->priv->pos+lsv->priv->pressed_pos)-allocation->height/2.0);
 }
 
 static gboolean
 lyric_show_viewport_expose(GtkWidget    *widget,GdkEventExpose *event)
 {
+    LyricShowViewport *lsv;
+    lsv = LYRIC_SHOW_VIEWPORT(widget);
+    GdkWindow   *view = gtk_viewport_get_view_window(GTK_VIEWPORT(widget));
 
 #if 1 ///必须启用否则widget大小变化时view上的东西不会被自动清除，界面混乱
-    GdkWindow   *view = gtk_viewport_get_view_window(GTK_VIEWPORT(widget));
     gint        view_width,view_height;
     view_width = gdk_window_get_width(view);
     view_height = gdk_window_get_height(view);
@@ -255,9 +294,128 @@ lyric_show_viewport_expose(GtkWidget    *widget,GdkEventExpose *event)
                        view_height);
 #endif
 
+
     GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->expose_event(widget,event);
+
+    if(lsv->priv->is_pressed)
+    {
+        gtk_paint_hline(widget->style,
+                        gtk_viewport_get_bin_window(GTK_VIEWPORT(widget)),
+                        GTK_STATE_ACTIVE,
+                        NULL,
+                        widget,
+                        NULL,
+                        0,widget->allocation.width,
+                        lsv->priv->pos+lsv->priv->pressed_pos);//widget->allocation.height/2.0);
+    }
     return FALSE;
 }
+
+static gboolean
+lyric_show_viewport_button_press(GtkWidget    *widget,GdkEventButton *event)
+{
+    LyricShowViewport *lsv;
+    lsv = LYRIC_SHOW_VIEWPORT(widget);
+    gint x = 0;
+    gint y = 0;
+    gtk_widget_get_pointer(widget,&x,&y);
+
+    lsv->priv->is_pressed = TRUE;
+    lsv->priv->pressed_y = y;
+
+///    g_warning("%s",__FUNCTION__);
+
+    lyric_show_viewport_update_cursor(lsv);
+    gtk_widget_queue_resize(widget);
+///    GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->button_press_event(widget,event);
+    return FALSE;
+}
+
+static gboolean
+lyric_show_viewport_button_release(GtkWidget    *widget,GdkEventButton *event)
+{
+    LyricShowViewport *lsv;
+    lsv = LYRIC_SHOW_VIEWPORT(widget);
+
+    guint64 t=0;
+    gint x = 0;
+    gint y = 0;
+    gtk_widget_get_pointer(widget,&x,&y);
+
+///    g_warning("%s:x-<%d>,y-<%d>",__FUNCTION__,x,y);
+
+    lsv->priv->is_pressed = FALSE;
+
+    t = lyric_show_viewport_get_requested_time(lsv);
+    ///lsv->priv->pos += lsv->priv->pressed_pos ;
+    lsv->priv->pressed_pos = 0;
+
+    lyric_show_viewport_update_cursor(lsv);
+    lyric_show_time_request(LYRIC_SHOW(lsv),t);
+    lyric_show_viewport_update_current_widget(lsv);
+
+///    GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->button_release_event(widget,event);
+    return FALSE;
+}
+
+static gboolean
+lyric_show_viewport_motion_notify(GtkWidget *widget,GdkEventMotion *event)
+{
+    LyricShowViewport *lsv;
+    lsv = LYRIC_SHOW_VIEWPORT(widget);
+    gint x = 0;
+    gint y = 0;
+    gint tmp_pos = 0;
+    gtk_widget_get_pointer(widget,&x,&y);
+    
+    tmp_pos = lsv->priv->pressed_y - y;
+    if(tmp_pos + lsv->priv->pos > 0)
+    {
+        if(tmp_pos + lsv->priv->pos > lsv->priv->lyricbox->allocation.height)
+            tmp_pos = lsv->priv->lyricbox->allocation.height-lsv->priv->pos-1;
+    }else{
+        tmp_pos = -lsv->priv->pos;
+    }
+    lsv->priv->pressed_pos = tmp_pos;
+    if(GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->motion_notify_event)
+    {
+        GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->motion_notify_event(widget,event);
+    }
+    gtk_widget_queue_resize(widget);
+    return FALSE;
+}
+
+static void
+lyric_show_viewport_update_cursor(LyricShowViewport *lsv)
+{
+    GdkWindow *win = gtk_widget_get_window(GTK_WIDGET(lsv));
+    if(lsv->priv->is_pressed)
+    {
+        GdkCursor *cur = gdk_cursor_new(GDK_FLEUR);
+        gdk_window_set_cursor(win,cur);
+        gdk_cursor_unref(cur);
+    }else{
+        gdk_window_set_cursor(win,NULL);
+    }
+}
+
+static void
+lyric_show_viewport_update_current_widget(LyricShowViewport *lsv)
+{
+    if(!lsv->priv->is_pressed && lsv->priv->current_widget)
+    {
+        GdkColor color = {0};
+        GtkAllocation alc0,alc1;
+        gdk_color_parse("blue",&color);
+        gtk_widget_modify_fg(lsv->priv->current_widget,GTK_STATE_ACTIVE,&color);
+        gtk_widget_set_state(lsv->priv->current_widget,GTK_STATE_ACTIVE);
+        gtk_widget_get_allocation(lsv->priv->current_widget,&alc0);
+        gtk_widget_get_allocation(lsv->priv->lyricbox,&alc1);
+        lsv->priv->pos = (alc0.y - alc1.y)+alc0.height/2.0;
+        gtk_widget_queue_resize(lsv->priv->current_widget);
+    }
+}
+
 static void
 lyric_show_viewport_sync_time_line_widget(LyricShowViewport *lsv)
 {
@@ -288,19 +446,7 @@ lyric_show_viewport_sync_time_line_widget(LyricShowViewport *lsv)
             gtk_widget_set_state(lsv->priv->current_widget,GTK_STATE_NORMAL);
         }
         lsv->priv->current_widget = pre_llw;
-        if(lsv->priv->current_widget)
-        {
-            GdkColor color = {0};
-            GtkAllocation alc0,alc1;
-            gdk_color_parse("blue",&color);
-            gtk_widget_modify_fg(lsv->priv->current_widget,GTK_STATE_ACTIVE,&color);
-            gtk_widget_set_state(lsv->priv->current_widget,GTK_STATE_ACTIVE);
-            gtk_widget_get_allocation(lsv->priv->current_widget,&alc0);
-            gtk_widget_get_allocation(lsv->priv->lyricbox,&alc1);
-            lsv->priv->pos = (alc0.y - alc1.y);
-            gtk_widget_queue_resize(lsv->priv->current_widget);
-        
-        }
+        lyric_show_viewport_update_current_widget(lsv);
     }
 }
 
@@ -309,6 +455,28 @@ lyric_show_viewport_set_lyric_visible(LyricShowViewport *lsv,gboolean visible)
 {
     gtk_widget_set_visible(lsv->priv->msg,!visible);
     gtk_widget_set_visible(lsv->priv->lyricbox,visible);
+}
+
+static guint64
+lyric_show_viewport_get_requested_time(LyricShowViewport *lsv)
+{
+    guint64 res = 0;
+    GList *l,*list;
+    gint current_y = 0;
+    GtkWidget *llw = NULL;
+    list = gtk_container_get_children(GTK_CONTAINER(lsv->priv->lyricbox));
+    current_y = lsv->priv->lyricbox->allocation.y+lsv->priv->pressed_pos + lsv->priv->pos;
+    for(l=list;l;l=l->next)
+    {
+        llw = GTK_WIDGET(l->data);
+        if(llw && current_y >= llw->allocation.y && current_y <= llw->allocation.y+llw->allocation.height)
+        {
+            res = lyric_line_widget_get_time(LYRIC_LINE_WIDGET(llw));
+            break;
+        }
+    }
+    g_list_free(list);
+    return res;
 }
 
 static const gchar*
@@ -412,15 +580,25 @@ lyric_show_viewport_new(void)
     return GTK_WIDGET(g_object_new(LYRIC_SHOW_VIEWPORT_TYPE,NULL));
 }
 
-#ifdef on_test
+#ifdef on_test_lyric_show_view_port
 #define timeout_value 100
+
+static guint64 line_time = 0;
+
 static gboolean
 idle_timeout(LyricShowViewport *lsv)
 {
-    static guint64 time = 0;
-    lyric_show_set_time(LYRIC_SHOW(lsv),time);
-    time += timeout_value;
+
+    lyric_show_set_time(LYRIC_SHOW(lsv),line_time);
+    line_time += timeout_value;
     return TRUE;
+}
+
+static void
+time_request(LyricShow *lsw,guint64 t)
+{
+    line_time = t;
+    g_warning("%s:%lu",__FUNCTION__,t);
 }
 
 int main(int argc,char**argv)
@@ -439,6 +617,7 @@ int main(int argc,char**argv)
     g_timeout_add(timeout_value,idle_timeout,lsv);
 ///    lyric_show_set_time(LYRIC_SHOW(lsv),1234);
     g_signal_connect(window,"destroy",G_CALLBACK(gtk_main_quit),NULL);
+    g_signal_connect(lsv,"time-request",G_CALLBACK(time_request),NULL);
     gtk_main();
     return 0;
 }
