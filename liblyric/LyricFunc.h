@@ -3,7 +3,6 @@
 
 #include <glib.h>
 #include <gio/gio.h>
-#include <glib/gi18n.h>
 
 typedef struct {
 	gchar *artist;

@@ -1,6 +1,7 @@
 #ifndef LYRIC_SHOW_IFACE_H
 #define LYRIC_SHOW_IFACE_H
 
+#include <glib.h>
 
 G_BEGIN_DECLS
 

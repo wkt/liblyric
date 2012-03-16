@@ -1,10 +1,31 @@
+/**
+* *lyriclinewidget.c
+* *
+* *Copyright (c) 2012 Wei Keting
+* *
+* *Authors by:Wei Keting <weikting@gmail.com>
+* *
+* */
+
+#ifdef HAVE_CONFIG_H
+#   include <config.h>
+#endif
+
 #include <stdio.h>
 #include <assert.h>
+
+#include <string.h>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
 #include "LyricTtSearch.h"
+
+#ifdef GETTEXT_PACKAGE
+#include <glib/gi18n-lib.h>
+#else
+#include <glib/gi18n.h>
+#endif
 
 int
 tt_CodeFunc(unsigned int Id, char* song)
@@ -226,6 +247,7 @@ static LyricSearchEngine TtSearchEngine=
 LyricSearchEngine*
 lyric_search_get_tt_engine(void)
 {
+    TtSearchEngine.description = _("TT Search");
 	return &TtSearchEngine;
 }
 

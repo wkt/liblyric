@@ -1,11 +1,21 @@
 
+#ifdef HAVE_CONFIG_H
+#   include <config.h>
+#endif
+
 #include <gtk/gtk.h>
 #include <glib.h>
-#include <glib/gi18n.h>
+
 #include "LyricShowTreeView.h"
 
 #include "LyricShow.h"
 #include "lyricread.h"
+
+#ifdef GETTEXT_PACKAGE
+#include <glib/gi18n-lib.h>
+#else
+#include <glib/gi18n.h>
+#endif
 
 enum{
     LYRIC_STORE_ID=0,

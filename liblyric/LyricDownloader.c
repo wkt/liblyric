@@ -1,3 +1,6 @@
+#ifdef HAVE_CONFIG_H
+#   include <config.h>
+#endif
 
 #include <sys/types.h>
 #include <signal.h>
@@ -5,6 +8,12 @@
 #include <sys/wait.h>
 
 #include "LyricDownloader.h"
+
+#ifdef GETTEXT_PACKAGE
+#include <glib/gi18n-lib.h>
+#else
+#include <glib/gi18n.h>
+#endif
 
 struct _LyricDownloaderPriv
 {
@@ -264,13 +273,14 @@ lyric_down_loader_load(LyricDownloader *ldl,const gchar *uri)
     ldl->priv->uri = g_strdup(uri);
     ldl->priv->is_cancel = FALSE;
     GError *error = NULL;
+    const gchar *env[]={"LANG=C","LANGUAGE=C",NULL};
     gchar *cmd[]={"/usr/bin/wget",
                   "-t1",///设置重试次数为 1 (0 代表无限制)。
                   "-T30",///将所有超时设为 30 秒。
                   "-O","-",
                   ldl->priv->uri,NULL};
     if(g_spawn_async_with_pipes(NULL,
-                            cmd,NULL,
+                            cmd,env,
                             G_SPAWN_SEARCH_PATH|G_SPAWN_DO_NOT_REAP_CHILD,
                             NULL,NULL,
                             &ldl->priv->loaddata.pid,

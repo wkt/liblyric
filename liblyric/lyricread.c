@@ -3,15 +3,24 @@
 //      Copyright 2010 wkt <weikting@gmail.com>
 //      
 
+#ifdef HAVE_CONFIG_H
+#   include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <langinfo.h>
 #include <locale.h>
 #include <glib.h>
-#include <glib/gi18n.h>
+
 #include "lyricread.h"
 
+#ifdef GETTEXT_PACKAGE
+#include <glib/gi18n-lib.h>
+#else
+#include <glib/gi18n.h>
+#endif
 
 typedef struct _LocalEncode LocalEncode;
 

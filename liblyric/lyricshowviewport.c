@@ -13,16 +13,16 @@
 
 #include <glib.h>
 
+#include "lyricshowviewport.h"
+#include "lyricread.h"
+#include "LyricShow.h"
+#include "lyriclinewidget.h"
+
 #ifdef GETTEXT_PACKAGE
 #include <glib/gi18n-lib.h>
 #else
 #include <glib/gi18n.h>
 #endif
-
-#include "lyricshowviewport.h"
-#include "lyricread.h"
-#include "LyricShow.h"
-#include "lyriclinewidget.h"
 
 enum
 {
@@ -606,6 +606,13 @@ int main(int argc,char**argv)
     GtkWidget *window;
     GtkWidget *lsv;
 
+#if 0 ///defined(ENABLE_NLS) && ENABLE_NLS == 1
+    bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+    textdomain (GETTEXT_PACKAGE);
+#endif
+
+///    gtk_set_locale();
     gtk_init(&argc,&argv);
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     lsv = lyric_show_viewport_new();

@@ -1,9 +1,21 @@
+#ifdef HAVE_CONFIG_H
+#   include <config.h>
+#endif
+
 #include <stdio.h>
 #include <gtk/gtk.h>
+
+
 #include "LyricSearch.h"
 #include "LyricTtSearch.h"
 #include "LyricSogouSearch.h"
 #include "LyricDownloader.h"
+
+#ifdef GETTEXT_PACKAGE
+#include <glib/gi18n-lib.h>
+#else
+#include <glib/gi18n.h>
+#endif
 
 static const gchar *default_search_paths[]={"~/Lyric",".",NULL};
 static const gchar *default_lyric_format_array[]={"%a-%t","%n",NULL};
@@ -283,6 +295,7 @@ lyric_search_constructor(GType type,
 
 
 	build = gtk_builder_new();
+    gtk_builder_set_translation_domain(build,GETTEXT_PACKAGE);
 	gtk_builder_add_from_file(build,ui_xml,NULL);
 
 	lys->mainwin = GTK_DIALOG(gtk_builder_get_object(build,"dialog"));

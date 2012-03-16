@@ -2,7 +2,6 @@
 #define __LYIRC_SEARCH_H_
 
 #include <glib.h>
-#include <glib/gi18n.h>
 
 #include <glib-object.h>
 #include <unistd.h>

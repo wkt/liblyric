@@ -1,9 +1,20 @@
+#ifdef HAVE_CONFIG_H
+#   include <config.h>
+#endif
+
+
 #include "LyricFunc.h"
 #include <stdio.h>
 
 #include "lyricread.h"
 
 #include <glib.h>
+
+#ifdef GETTEXT_PACKAGE
+#include <glib/gi18n-lib.h>
+#else
+#include <glib/gi18n.h>
+#endif
 
 #if 0
 #include <curl/curl.h>
