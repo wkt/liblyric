@@ -40,6 +40,7 @@ struct _LyricShowViewportPrivate
     gint        pressed_y;
     gboolean    is_pressed;
     GtkWidget   *current_widget;
+    GtkWidget   *pre_widget;
     GtkWidget   *lyricbox;
     GtkWidget   *msg;
 };
@@ -295,7 +296,7 @@ lyric_show_viewport_expose(GtkWidget    *widget,GdkEventExpose *event)
     {
         gtk_paint_hline(widget->style,
                         gtk_viewport_get_bin_window(GTK_VIEWPORT(widget)),
-                        GTK_STATE_ACTIVE,
+                        GTK_STATE_NORMAL,
                         NULL,
                         widget,
                         NULL,
@@ -401,6 +402,14 @@ lyric_show_viewport_update_current_widget(LyricShowViewport *lsv)
         GdkColor color = {0};
         GtkAllocation alc0,alc1;
         gdk_color_parse("blue",&color);
+
+        if(lsv->priv->pre_widget &&
+            GTK_IS_WIDGET(lsv->priv->pre_widget) &&
+            lsv->priv->current_widget !=lsv->priv->pre_widget)
+        {
+            gtk_widget_modify_fg(lsv->priv->pre_widget,GTK_STATE_ACTIVE,NULL);
+            gtk_widget_set_state(lsv->priv->pre_widget,GTK_STATE_NORMAL);
+        }
         gtk_widget_modify_fg(lsv->priv->current_widget,GTK_STATE_ACTIVE,&color);
         gtk_widget_set_state(lsv->priv->current_widget,GTK_STATE_ACTIVE);
         gtk_widget_get_allocation(lsv->priv->current_widget,&alc0);
@@ -434,11 +443,7 @@ lyric_show_viewport_sync_time_line_widget(LyricShowViewport *lsv)
     g_list_free(list);
     if(pre_llw != lsv->priv->current_widget)
     {
-        if(lsv->priv->current_widget && GTK_IS_WIDGET(lsv->priv->current_widget))
-        {
-            gtk_widget_modify_fg(lsv->priv->current_widget,GTK_STATE_ACTIVE,NULL);
-            gtk_widget_set_state(lsv->priv->current_widget,GTK_STATE_NORMAL);
-        }
+        lsv->priv->pre_widget = lsv->priv->current_widget;
         lsv->priv->current_widget = pre_llw;
         lyric_show_viewport_update_current_widget(lsv);
     }
@@ -489,7 +494,8 @@ lyric_show_viewport_set_time(LyricShow *iface,guint64 time)
         lsv->priv->current_time = time;
         g_object_notify(G_OBJECT(lsv),"time");
     }
-    lyric_show_viewport_sync_time_line_widget(lsv);
+    if(!lsv->priv->is_pressed)
+        lyric_show_viewport_sync_time_line_widget(lsv);
 }
 
 static void

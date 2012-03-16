@@ -23,84 +23,84 @@ msgstr ""
 
 #: ../liblyric/LyricSearch.c:270
 msgid "Artist"
-msgstr ""
+msgstr "艺术家"
 
 #: ../liblyric/LyricSearch.c:277
 msgid "Title"
-msgstr ""
+msgstr "标题"
 
 #: ../liblyric/LyricSearch.c:485
 msgid "<b>Can't find lyric</b>"
-msgstr ""
+msgstr "<b>搜索不到歌词</b>"
 
 #: ../liblyric/LyricSearch.c:492
 msgid "lyric updated"
-msgstr ""
+msgstr "歌词已更新"
 
 #: ../liblyric/LyricSearch.c:497
 msgid "<b>Failed to update lyric</b>"
-msgstr ""
+msgstr "<b>更新歌词失败</b>"
 
 #: ../liblyric/LyricSearch.c:906
 msgid "Can't get a window"
-msgstr ""
+msgstr "无法取得窗口"
 
 #: ../liblyric/LyricShowTreeView.c:43
 msgid "SeeSee"
-msgstr ""
+msgstr "看看"
 
 #: ../liblyric/LyricShowTreeView.c:181
 #, c-format
 msgid "Title:%s"
-msgstr ""
+msgstr "标题：%s"
 
 #: ../liblyric/LyricShowTreeView.c:191
 #, c-format
 msgid "Artist:%s"
-msgstr ""
+msgstr "艺术家：%s"
 
 #: ../liblyric/LyricShowTreeView.c:201
 #, c-format
 msgid "Album:%s"
-msgstr ""
+msgstr "专辑：%s"
 
 #: ../liblyric/LyricShowTreeView.c:211
 #, c-format
 msgid "Author:%s"
-msgstr ""
+msgstr "作者：%s"
 
 #: ../liblyric/LyricSogouSearch.c:85
 msgid "Sogou"
-msgstr ""
+msgstr "搜狗"
 
 #: ../liblyric/LyricTtSearch.c:230
 msgid "TT Search"
-msgstr ""
+msgstr "千千搜索"
 
 #: ../data/download.glade.h:1
 msgid "<b>Artist:</b>"
-msgstr ""
+msgstr "<b>艺术家：</b>"
 
 #: ../data/download.glade.h:2
 msgid "<b>Server:</b>"
-msgstr ""
+msgstr "<b>服务器：</b>"
 
 #: ../data/download.glade.h:3
 msgid "<b>Title:</b>"
-msgstr ""
+msgstr "<b>标题：</b>"
 
 #: ../data/download.glade.h:4
 msgid "Download"
-msgstr ""
+msgstr "下载"
 
 #: ../data/download.glade.h:5
 msgid "Save to:"
-msgstr ""
+msgstr "保存到："
 
 #: ../data/download.glade.h:6
 msgid "Search lyric online and download"
-msgstr ""
+msgstr "在线搜索和下载歌词"
 
 #: ../data/download.glade.h:7
 msgid "Select one of the result for download:"
-msgstr ""
+msgstr "请选择下载："

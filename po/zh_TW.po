@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-06-10 22:53+0800\n"
+"POT-Creation-Date: 2012-03-16 21:35+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,68 +17,56 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../liblyric/LyricSearch.c:263
+#: ../liblyric/LyricSearch.c:754
+msgid "Can't get a window"
+msgstr ""
+
+#: ../liblyric/LyricSearch.c:970
 msgid "ID"
 msgstr ""
 
-#: ../liblyric/LyricSearch.c:270
+#: ../liblyric/LyricSearch.c:977
 msgid "Artist"
 msgstr ""
 
-#: ../liblyric/LyricSearch.c:277
+#: ../liblyric/LyricSearch.c:984
 msgid "Title"
-msgstr ""
-
-#: ../liblyric/LyricSearch.c:485
-msgid "<b>Can't find lyric</b>"
-msgstr ""
-
-#: ../liblyric/LyricSearch.c:492
-msgid "lyric updated"
-msgstr ""
-
-#: ../liblyric/LyricSearch.c:497
-msgid "<b>Failed to update lyric</b>"
-msgstr ""
-
-#: ../liblyric/LyricSearch.c:906
-msgid "Can't get a window"
 msgstr ""
 
 #: ../liblyric/LyricShowTreeView.c:43
 msgid "SeeSee"
 msgstr ""
 
-#: ../liblyric/LyricShowTreeView.c:181
+#: ../liblyric/LyricShowTreeView.c:182
 #, c-format
 msgid "Title:%s"
 msgstr ""
 
-#: ../liblyric/LyricShowTreeView.c:191
+#: ../liblyric/LyricShowTreeView.c:192
 #, c-format
 msgid "Artist:%s"
 msgstr ""
 
-#: ../liblyric/LyricShowTreeView.c:201
+#: ../liblyric/LyricShowTreeView.c:202
 #, c-format
 msgid "Album:%s"
 msgstr ""
 
-#: ../liblyric/LyricShowTreeView.c:211
+#: ../liblyric/LyricShowTreeView.c:212
 #, c-format
 msgid "Author:%s"
 msgstr ""
 
-#: ../liblyric/LyricSogouSearch.c:85
+#: ../liblyric/LyricSogouSearch.c:92
 msgid "Sogou"
 msgstr ""
 
-#: ../liblyric/LyricTtSearch.c:230
+#: ../liblyric/LyricTtSearch.c:221
 msgid "TT Search"
 msgstr ""
 
 #: ../data/download.glade.h:1
-msgid "<b>Artist:</b>"
+msgid "Search lyric online and download"
 msgstr ""
 
 #: ../data/download.glade.h:2
@@ -86,21 +74,21 @@ msgid "<b>Server:</b>"
 msgstr ""
 
 #: ../data/download.glade.h:3
-msgid "<b>Title:</b>"
+msgid "<b>Artist:</b>"
 msgstr ""
 
 #: ../data/download.glade.h:4
-msgid "Download"
+msgid "<b>Title:</b>"
 msgstr ""
 
 #: ../data/download.glade.h:5
-msgid "Save to:"
+msgid "Select one of the result for download:"
 msgstr ""
 
 #: ../data/download.glade.h:6
-msgid "Search lyric online and download"
+msgid "Save to:"
 msgstr ""
 
 #: ../data/download.glade.h:7
-msgid "Select one of the result for download:"
+msgid "Download"
 msgstr ""
