@@ -12,12 +12,11 @@ libtool_opts =							\
   -version-info $(LT_VERSION_INFO)				\
   -export-dynamic $(no_undefined)
 
-###LIB_LYRIC_DIR=$(pkglibdir)
-
-lib_lyricdir=$(LIB_LYRIC_DIR)
-
-lib_lyric_LTLIBRARIES=liblyric.la
-
+if USE_GTK2
+lib_LTLIBRARIES=liblyric-gtk2.la
+else
+lib_LTLIBRARIES=liblyric-gtk3.la
+endif
 common-glue.c:common.marshal Makefile.am common-glue.h
 	glib-genmarshal --body  --prefix=lyric_show_common_marshal $< >$@
 
@@ -43,10 +42,18 @@ liblyric_la_SOURCES =                       \
                 lyricshowviewport.c  		\
                 $(NULL)
 
-#                LyricSogouSearch.c          \
-#                LyricSogouSearch.h          \
-#                LyricSearchCurl.c           
-#                LyricSearchCurl.h           
+
+liblyric_la_LDFLAGS = -module $(CURL_LIBS) $(GTK_LIBS) $(LIBXML2_LIBS) $(libtool_opts)
+liblyric_la_CFLAGS = $(CURL_CFLAGS) $(GTK_CFLAGS) $(LIBXML2_CFLAGS)
+##liblyric_la_LIBADD = 
+
+liblyric_gtk2_la_SOURCES = $(liblyric_la_SOURCES)
+liblyric_gtk2_la_CFLAGS = $(liblyric_la_CFLAGS)
+liblyric_gtk2_la_LDFLAGS = $(liblyric_la_LDFLAGS)
+
+liblyric_gtk3_la_SOURCES = $(liblyric_la_SOURCES)
+liblyric_gtk3_la_CFLAGS = $(liblyric_la_CFLAGS)
+liblyric_gtk3_la_LDFLAGS = $(liblyric_la_LDFLAGS)
 
 lyricincdir=$(includedir)/liblyric
 lyricinc_HEADERS =  LyricSearch.h       \
@@ -56,12 +63,11 @@ lyricinc_HEADERS =  LyricSearch.h       \
                     LibLyric.h          \
 					lyricshowviewport.h			\
                     $(NULL)
-
-liblyric_la_LDFLAGS = -module $(CURL_LIBS) $(GTK_LIBS) $(LIBXML2_LIBS) $(libtool_opts)
-liblyric_la_CFLAGS = $(CURL_CFLAGS) $(GTK_CFLAGS) $(LIBXML2_CFLAGS)
-##liblyric_la_LIBADD = 
-
+if TEST
 noinst_PROGRAMS = test_lyric test_lyric_show_viewport
+else
+noinst_PROGRAMS = 
+endif
 
 test_lyric_SOURCES = $(liblyric_la_SOURCES)
 test_lyric_CFLAGS = $(liblyric_la_CFLAGS) -Dtest_lyric_search

@@ -4,9 +4,9 @@ libdir=@libdir@
 includedir=@includedir@
 
 
-Name: liblyric
+Name: liblyric-@GTK_NAME@
 Description: Library for lyric things
 Version: @VERSION@
-Requires: gtk+-2.0
-Libs: -L${libdir} -llyric
+Requires: @GTK@
+Libs: -L${libdir} -llyric-@GTK_NAME@
 Cflags: -I${includedir}/liblyric
