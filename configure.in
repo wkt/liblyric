@@ -104,16 +104,16 @@ PKG_CHECK_MODULES(GTK, [
 
 PKG_CHECK_MODULES(LIBXML2,libxml-2.0)
 
-# Make dependency CFLAGS and LIBS available
+PKG_CHECK_MODULES(TOTEM,[libpeas-gtk-1.0 totem])
+PLUGINDIR=`pkg-config --variable=pluginsdir totem`
+AC_SUBST(PLUGINDIR)
 
+# Make dependency CFLAGS and LIBS available
 
 # Get nautilus extensions directory
 
 ##NAUTILUS_EXTENSION_DIR=`$PKG_CONFIG --variable=extensiondir libnautilus-extension`
 ##AC_SUBST(NAUTILUS_EXTENSION_DIR)
-
-LIB_LYRIC_DIR=$libdir
-AC_SUBST(LIB_LYRIC_DIR)
 
 UIDIR=${datadir}/$PACKAGE
 AC_SUBST(UIDIR)
@@ -150,6 +150,8 @@ AC_OUTPUT([
 	liblyric.pc
 	liblyric/Makefile
 	po/Makefile.in
+    totem-plugin/Makefile
+    totem-plugin/totem-lyric.totem-plugin
 	data/Makefile
 ])
 

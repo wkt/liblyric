@@ -46,6 +46,8 @@ struct _LyricShowViewportClass
 GType
 lyric_show_viewport_get_type(void);
 
+GtkWidget*
+lyric_show_viewport_new(void);
 
 G_END_DECLS
 

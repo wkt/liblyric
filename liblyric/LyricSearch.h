@@ -65,19 +65,29 @@ lyric_search_set_mrl(LyricSearch *lys,const gchar *mrl);
 const gchar *
 lyric_search_get_lyricfile(LyricSearch *lys);
 
-
-void
+gboolean
 lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,const gchar *album);
 
+gboolean
+lyric_search_set_album(LyricSearch *lys,const gchar *album);
+
+gboolean
+lyric_search_set_title(LyricSearch *lys,const gchar *title);
+
+gboolean
+lyric_search_set_artist(LyricSearch *lys,const gchar *artist);
+
 void
-lyric_search_auto_get_lyric(LyricSearch *lys);
+lyric_search_find_lyric(LyricSearch *lys);
 
 gboolean
 lyric_search_manual_lyric(LyricSearch *lys);
 
+gboolean
+lyric_search_is_ready(LyricSearch *lys);
+
 LyricSearchStatus
 lyric_search_get_status(LyricSearch *lys);
-
 
 LyricSearch*
 lyric_search_new(void);

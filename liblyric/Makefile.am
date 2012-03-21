@@ -9,14 +9,17 @@ INCLUDES =						\
 ###	-Werror                                         
 
 libtool_opts =							\
-  -version-info $(LT_VERSION_INFO)				\
-  -export-dynamic $(no_undefined)
+	-version-info $(LT_VERSION_INFO)				\
+	-export-dynamic $(no_undefined)				\
+	-module 										\
+	$(NULL)
 
 if USE_GTK2
 lib_LTLIBRARIES=liblyric-gtk2.la
 else
 lib_LTLIBRARIES=liblyric-gtk3.la
 endif
+
 common-glue.c:common.marshal Makefile.am common-glue.h
 	glib-genmarshal --body  --prefix=lyric_show_common_marshal $< >$@
 
@@ -43,7 +46,7 @@ liblyric_la_SOURCES =                       \
                 $(NULL)
 
 
-liblyric_la_LDFLAGS = -module $(CURL_LIBS) $(GTK_LIBS) $(LIBXML2_LIBS) $(libtool_opts)
+liblyric_la_LDFLAGS = $(CURL_LIBS) $(GTK_LIBS) $(LIBXML2_LIBS) $(libtool_opts)
 liblyric_la_CFLAGS = $(CURL_CFLAGS) $(GTK_CFLAGS) $(LIBXML2_CFLAGS)
 ##liblyric_la_LIBADD = 
 

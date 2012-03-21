@@ -20,11 +20,13 @@
 static const gchar *default_search_paths[]={"~/Lyric",".",NULL};
 static const gchar *default_lyric_format_array[]={"%a-%t","%n",NULL};
 static const gchar *default_lyric_dir="~/Lyric";
-static const gchar *default_lyric_name_format = "%a-%t@%n";
+static const gchar *default_lyric_name_format = "%n";
 
 struct _LyricSearch
 {
 	GObject parent;
+
+    
 
 	gchar *artist;
 	gchar *title;
@@ -72,9 +74,9 @@ struct _LyricSearchPrivate
 	LyricSearchType type;
 	LyricDownloader *downloader;
 
-	GKeyFile *confkey;
 	gchar    *config;
 	LyricSearchStatus lss;
+    gboolean    auto_get_lyric_mode;
 };
 
 typedef struct 
@@ -235,6 +237,7 @@ lyric_search_set_status(LyricSearch *lys,LyricSearchStatus lss)
 		default:
 		break;
 	}
+    g_warning("status_changed:%d",lss);
     g_signal_emit(lys,LYRIC_SEARCH_SIGNALS[STATUS_CHANGED],0);
 }
 
@@ -273,9 +276,6 @@ lyric_search_constructor(GType type,
 	lys->priv->engine = g_slist_insert(lys->priv->engine,lyric_search_get_tt_engine(),-1);
 ///	lys->priv->engine = g_slist_insert(lys->priv->engine,lyric_search_get_sogou_engine(),-1);
 
-	lys->priv->downloader = lyric_down_loader_new();
-
-
 	build = gtk_builder_new();
     gtk_builder_set_translation_domain(build,GETTEXT_PACKAGE);
 	gtk_builder_add_from_file(build,ui_xml,NULL);
@@ -307,9 +307,6 @@ lyric_search_constructor(GType type,
 
 	gtk_window_set_focus(GTK_WINDOW(lys->mainwin),lys->search_button);
 
-	g_signal_connect(lys->priv->downloader,"error",G_CALLBACK(on_downloader_error),lys);
-	g_signal_connect(lys->priv->downloader,"done",G_CALLBACK(on_downloader_done),lys);
-
 	g_signal_connect(lys->search_button,"clicked",G_CALLBACK(lyric_search_search_button_clicked),lys);
 	g_signal_connect(lys->download_button,"clicked",G_CALLBACK(lyric_search_download_button_clicked),lys);
 	g_signal_connect(lys->close_button,"clicked",G_CALLBACK(lyric_search_close_button_clicked),lys);
@@ -327,9 +324,11 @@ lyric_search_finalize(GObject *object)
 	LyricSearch *lys;
 	lys = LYRIC_SEARCH(object);
 
-    lyric_down_loader_cancel(lys->priv->downloader);
-    g_object_unref(lys->priv->downloader);
-    
+    if(lys->priv->downloader && G_IS_OBJECT(lys->priv->downloader))
+    {
+        lyric_down_loader_cancel(lys->priv->downloader);
+        g_object_unref(lys->priv->downloader);
+    }
 
 	g_free(lys->mrl);
     g_free(lys->artist);
@@ -372,8 +371,8 @@ lyric_search_finalize(GObject *object)
 	G_OBJECT_CLASS(lyric_search_parent_class)->finalize(object);
 }
 
-void
-lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,const gchar *album)
+gboolean
+lyric_search_set_artist(LyricSearch *lys,const gchar *artist)
 {
     gboolean    is_changed = FALSE;
 	if(artist != lys->artist){
@@ -385,7 +384,13 @@ lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,co
 			lys->artist = NULL;
 		}
 	}
+    return is_changed;
+}
 
+gboolean
+lyric_search_set_title(LyricSearch *lys,const gchar *title)
+{
+    gboolean    is_changed = FALSE;
 	if(title != lys->title){
 		g_free(lys->title);
 		if(title){
@@ -395,8 +400,14 @@ lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,co
 			lys->title = NULL;
 		}
 	}
+    return is_changed;
+}
 
-	if(album != lys->album){
+gboolean
+lyric_search_set_album(LyricSearch *lys,const gchar *album)
+{
+	gboolean    is_changed = FALSE;
+    if(album != lys->album){
 		g_free(lys->album);
 		if(album){
 			lys->album = g_strdup(album);
@@ -405,8 +416,25 @@ lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,co
 			lys->album = NULL;
 		}
 	}
-    if(is_changed)
-        lyric_search_make_lyricfile(lys);
+    return is_changed;
+}
+
+gboolean
+lyric_search_set_info(LyricSearch *lys,const gchar *artist,const gchar *title,const gchar *album)
+{
+    gboolean    is_changed = 
+        lyric_search_set_artist(lys,artist) && 
+        lyric_search_set_title(lys,title)   &&
+        lyric_search_set_album(lys,album);
+    return is_changed;
+}
+
+void
+lyric_search_show_info(LyricSearch *lys)
+{
+	fprintf(stdout,"artist:%s\n",lys->artist);
+	fprintf(stdout,"title :%s\n",lys->title);
+    fprintf(stdout,"album :%s\n",lys->album);
 }
 
 void
@@ -459,7 +487,7 @@ lyric_search_set_mrl(LyricSearch *lys,const gchar *mrl)
 	if(lys->mediadir == NULL){
 		lys->mediadir = g_build_filename(g_get_home_dir(),"Lyric",NULL);
 	}
-    lyric_search_make_lyricfile(lys);
+
 }
 
 /***
@@ -536,6 +564,9 @@ lyric_search_make_lyricfile(LyricSearch *lys)
     {
         lyric_search_set_lyric_dir(lys,default_lyric_dir);
     }
+
+    if(!lyric_search_is_ready(lys))
+        return;
 
     if(lys->lyric_name_format)
     {
@@ -644,6 +675,11 @@ lyric_search_set_lyric_dir(LyricSearch *lys,const gchar *lyric_dir)
     return res;
 }
 
+gboolean
+lyric_search_is_ready(LyricSearch *lys)
+{
+    return (lys->title && lys->title[0]);
+}
 
 void
 lyric_search_set_engine(LyricSearch *lys,LyricSearchEngine* engine)
@@ -681,7 +717,7 @@ lyric_search_search_result_parser(LyricSearch *lys,const gchar *data)
 	return lys->engine->parser(&id,data);
 }
 
-void
+static void
 lyric_search_auto_get_lyric(LyricSearch *lys)
 {
 	gboolean ret_bl = TRUE;
@@ -689,11 +725,33 @@ lyric_search_auto_get_lyric(LyricSearch *lys)
 	lys->priv->type = LYRIC_AUTO_SEARCH;
 	lyric_down_loader_cancel(lys->priv->downloader);
 
-	if(lyric_search_has_local_lyric(lys)){
-		lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES);
-	}else{
-		lyric_search_start_search_lyircid(lys,NULL);
-	}
+    lyric_search_start_search_lyircid(lys,NULL);
+
+}
+
+void
+lyric_search_reset_downloader(LyricSearch *lys)
+{
+	gpointer tmp = lys->priv->downloader;
+
+    lys->priv->downloader = lyric_down_loader_new();
+	g_signal_connect(lys->priv->downloader,"error",G_CALLBACK(on_downloader_error),lys);
+	g_signal_connect(lys->priv->downloader,"done",G_CALLBACK(on_downloader_done),lys);
+    if(tmp)
+    {
+        lyric_down_loader_cancel(LYRIC_DOWNLOADER(tmp));
+    }
+}
+
+void
+lyric_search_present_dialog(LyricSearch *lys,gboolean   download_sensitive)
+{
+	gtk_entry_set_text(lys->artist_entry,lys->artist?lys->artist:"");
+	gtk_entry_set_text(lys->title_entry,lys->title?lys->title:"");
+	gtk_entry_set_text(lys->lyric_entry,lys->lyricfile_w);
+	gtk_widget_set_sensitive(GTK_WIDGET(lys->download_button),download_sensitive);
+
+	gtk_window_present(lys->mainwin);
 }
 
 gboolean
@@ -712,13 +770,22 @@ lyric_search_manual_get_lyric(LyricSearch *lys)
 		gtk_widget_destroy(msg);
 		return FALSE;
 	}
-	gtk_entry_set_text(lys->artist_entry,lys->artist?lys->artist:"");
-	gtk_entry_set_text(lys->title_entry,lys->title?lys->title:"");
-	gtk_entry_set_text(lys->lyric_entry,lys->lyricfile_w);
-	gtk_widget_set_sensitive(GTK_WIDGET(lys->download_button),FALSE);
-
-	gtk_window_present(lys->mainwin);
+    lyric_search_present_dialog(lys,FALSE);
 	return TRUE;
+}
+
+void
+lyric_search_find_lyric(LyricSearch *lys)
+{
+    lyric_search_make_lyricfile(lys);
+    lys->priv->type = LYRIC_SEARCH_NONE;
+    lyric_search_show_info(lys);
+	if(lyric_search_has_local_lyric(lys)){
+		lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES);
+	}else{
+        lyric_search_reset_downloader(lys);
+        lyric_search_auto_get_lyric(lys);
+    }
 }
 
 void
@@ -812,8 +879,8 @@ lyric_search_download_button_clicked(GtkButton *button,LyricSearch *lys)
 static void
 lyric_search_close_button_clicked(GtkButton *button,LyricSearch *lys)
 {
-///	gtk_widget_hide(GTK_WIDGET(lys->mainwin));
-    gtk_window_iconify(GTK_WINDOW(lys->mainwin));
+	gtk_widget_hide(GTK_WIDGET(lys->mainwin));
+///    gtk_window_iconify(GTK_WINDOW(lys->mainwin));
 
 }
 
@@ -890,8 +957,8 @@ lyric_search_lyricview_update(LyricSearch *lys,GSList *search_result)
 static gboolean
 lyric_search_widget_delete_event(GtkWidget *widget,GdkEvent  *event,LyricSearch *lys)
 {
-///	gtk_widget_hide(widget);
-    gtk_window_iconify(GTK_WINDOW(widget));
+	gtk_widget_hide(widget);
+///    gtk_window_iconify(GTK_WINDOW(widget));
 	return TRUE;
 }
 
@@ -958,7 +1025,9 @@ lyric_search_engine_box_config(LyricSearch *lys)
 static void
 on_downloader_error(LyricDownloader *ldl,const gchar *message,LyricSearch *lys)
 {
-	LyricSearchStatus lss =  lyric_search_get_status(lys);
+	if(lys->priv->downloader != ldl)
+        return;
+    LyricSearchStatus lss =  lyric_search_get_status(lys);
 	switch(lss){
 		case LYRIC_SEARCH_STATUS_SEARCHING:
 			//to do
@@ -976,6 +1045,12 @@ on_downloader_error(LyricDownloader *ldl,const gchar *message,LyricSearch *lys)
 static void
 on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 {
+	if(lys->priv->downloader != ldl)
+    {
+        g_object_unref(ldl);
+        return;
+    }
+
 	LyricSearchStatus lss = lyric_search_get_status(lys);
 
 	switch(lss){
@@ -987,6 +1062,10 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 			lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SEARCHING_GET_DATA);
 			GSList *l = lyric_search_search_result_parser(lys,data->str);
 			lyric_func_lyricid_list(l);
+            if(!lys->priv->auto_get_lyric_mode && lys->priv->type == LYRIC_AUTO_SEARCH)
+            {
+                lys->priv->type = LYRIC_MANUAL_SEARCH;
+            }
 			switch(lys->priv->type){
 				case LYRIC_AUTO_SEARCH:
 					if(l){
@@ -999,6 +1078,7 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 				case LYRIC_MANUAL_SEARCH:
 					if(l){
 						lyric_search_lyricview_update(lys,l);
+                        lyric_search_present_dialog(lys,FALSE);
 					}else{
 						lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SEARCHING_FAILED);
 					}
@@ -1034,12 +1114,6 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 #include "LyricShow.h"
 #include "LyricShowTreeView.h"
 
-void
-lyric_search_show_info(LyricSearch *lys)
-{
-	fprintf(stdout,"artist:%s\n",lys->artist);
-	fprintf(stdout,"title :%s\n",lys->title);
-}
 
 #if 0
 int main(int argc,char **argv)
@@ -1075,8 +1149,10 @@ int main(int argc,char **argv)
 	g_thread_init(NULL);
 	lys = lyric_search_new();
 	lyric_search_set_info(lys,"S.H.E",argv[1],NULL);
-	///lyric_search_auto_get_lyric(lys);
-	lyric_search_manual_get_lyric(lys);
+	////lyric_search_auto_get_lyric(lys);
+	lyric_search_find_lyric(lys);
+    lyric_search_find_lyric(lys);
+    lyric_search_find_lyric(lys);
     g_signal_connect(lys->mainwin,"delete-event",G_CALLBACK(gtk_main_quit),NULL);
 	gtk_main();
 	return 0;

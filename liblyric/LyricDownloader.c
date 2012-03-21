@@ -115,6 +115,8 @@ lyric_down_loader_finalize(GObject *object)
 static void
 lyric_down_loader_gpid_real_cancel(LyricDownloader *ldl)
 {
+    ldl->priv->is_cancel = TRUE;
+
     lyric_down_loader_gpid_clear(ldl);
 }
 
@@ -183,10 +185,6 @@ cmd_child_watch_callback(GPid pid,gint status,LyricDownloader *ldl)
         g_signal_emit(ldl,lyric_down_loader_signals[SIGNAL_ERROR],0,err_data);
     }
 
-    if(ldl->priv->is_cancel){
-        done_data = NULL;
-    }
-
     ldl->priv->loaddata.pid = 0;
 
     close(ldl->priv->loaddata.in);
@@ -200,6 +198,11 @@ cmd_child_watch_callback(GPid pid,gint status,LyricDownloader *ldl)
 
     lyric_down_loader_clear(ldl);
     ldl->priv->data = done_data;
+
+    if(ldl->priv->is_cancel){
+        done_data = NULL;
+    }
+
     g_signal_emit(ldl,lyric_down_loader_signals[SIGNAL_DONE],0,done_data);
 }
 

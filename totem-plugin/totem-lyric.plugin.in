@@ -1,0 +1,8 @@
+[Plugin]
+Module=totem-lyric
+IAge=1
+_Name=Lyric Show
+_Description=Show lyric on totem sidebar
+Authors=Wei Keting
+Copyright=Copyright © 2012 Wei Keting
+Website=http://wkt55555.blog.163.com/
