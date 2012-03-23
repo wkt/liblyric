@@ -158,7 +158,6 @@ AC_OUTPUT([
 	liblyric/Makefile
 	po/Makefile.in
     totem-plugin/Makefile
-    totem-plugin/totem-lyric.totem-plugin
 	data/Makefile
 ])
 
