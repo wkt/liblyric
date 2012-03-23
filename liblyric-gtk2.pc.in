@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+
+Name: liblyric-gtk2
+Description: Library for lyric things
+Version: @VERSION@
+Requires: @GTK2@
+Libs: -L${libdir} -llyric-gtk2
+Cflags: -I${includedir}/liblyric
