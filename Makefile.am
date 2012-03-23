@@ -12,10 +12,12 @@ DISTCLEANFILES = \
   intltool-update
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA= liblyric-gtk3.pc
+
 
 if USE_GTK2
 pkgconfig_DATA = liblyric-gtk3.pc liblyric-gtk2.pc
+else
+pkgconfig_DATA= liblyric-gtk3.pc
 endif
 
 EXTRA_DIST= intltool-extract.in         \
