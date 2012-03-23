@@ -224,11 +224,12 @@ metadata_updated(TotemObject *totem,
 }
 
 static void
-current_time_notify(TotemObject *totem,
+seekable_notify(TotemObject *totem,
                     GParamSpec *pspec,
                     TotemLyricPlugin *pi)
 {
-    g_warning("current-time:%ld",totem_get_current_time(totem));
+    g_object_set(pi->priv->lsw,"time-requestable",totem_is_seekable(totem),NULL);
+    g_warning("seekable:%d",totem_is_seekable(totem));
 }
 
 static gboolean
@@ -245,6 +246,13 @@ static void
 lyric_updated(LyricSearch *lys,const gchar *lyricfile,TotemLyricPlugin *pi)
 {
     lyric_show_set_lyric(pi->priv->lsw,lyricfile);
+}
+
+static void
+time_request(LyricShow *lsw,guint64 t,TotemLyricPlugin *pi)
+{
+    totem_action_seek_time(pi->priv->totem,t,FALSE);
+    totem_action_play(pi->priv->totem);
 }
 
 static gboolean 
@@ -265,7 +273,12 @@ impl_activate_real(TotemLyricPlugin *pi, TotemObject *totem, GError **error)
     g_signal_connect(totem,"file-opened",G_CALLBACK(file_opened),pi);
     g_signal_connect(totem,"file-closed",G_CALLBACK(file_closed),pi);
     g_signal_connect(totem,"metadata-updated",G_CALLBACK(metadata_updated),pi);
+    g_signal_connect(totem,"notify::seekable",G_CALLBACK(seekable_notify),pi);
+
     g_signal_connect(pi->priv->lys,"lyric-updated",G_CALLBACK(lyric_updated),pi);
+
+    g_signal_connect(pi->priv->lsw,"time-request",G_CALLBACK(time_request),pi);
+
     pi->priv->timeout_id = g_timeout_add(200,(GSourceFunc)timeout_update,pi);
 
     if(totem_is_playing(totem) || totem_is_paused(totem))
@@ -287,12 +300,12 @@ impl_deactivate_real(TotemLyricPlugin *pi, TotemObject *totem)
     g_signal_handlers_block_by_func(pi->priv->totem,file_opened,pi);
     g_signal_handlers_block_by_func(pi->priv->totem,file_closed,pi);
     g_signal_handlers_block_by_func(pi->priv->totem,metadata_updated,pi);
-    g_signal_handlers_block_by_func(pi->priv->totem,metadata_updated,pi);
+    g_signal_handlers_block_by_func(pi->priv->totem,seekable_notify,pi);
 
     totem_remove_sidebar_page (totem, "lyric");
 
     g_object_unref(pi->priv->lys);
-    g_object_unref(pi->priv->lsw);
+//    g_object_unref(pi->priv->lsw);
 }
 
 static GtkWidget *

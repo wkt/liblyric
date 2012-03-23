@@ -12,13 +12,19 @@ DISTCLEANFILES = \
   intltool-update
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA= liblyric.pc
+pkgconfig_DATA= liblyric-gtk3.pc
+
+if USE_GTK2
+pkgconfig_DATA = liblyric-gtk3.pc liblyric-gtk2.pc
+endif
 
 EXTRA_DIST= intltool-extract.in         \
             intltool-merge.in           \
             intltool-update.in          \
             configure.in                \
             autogen.sh                  \
+            liblyric-gtk3.pc.in			\
+            liblyric-gtk2.pc.in			\
             $(NULL)
 
 potfile:

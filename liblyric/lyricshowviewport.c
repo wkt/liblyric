@@ -17,6 +17,7 @@
 #include "lyricread.h"
 #include "LyricShow.h"
 #include "lyriclinewidget.h"
+#include "gtkbininstance.h"
 
 #ifdef GETTEXT_PACKAGE
 #include <glib/gi18n-lib.h>
@@ -28,6 +29,7 @@ enum
 {
     PROP_0,
     PROP_TIME,
+    PROP_TIME_REQUESTABLE,
 };
 
 
@@ -39,9 +41,11 @@ struct _LyricShowViewportPrivate
     gint        pressed_pos;
     gint        pressed_y;
     gboolean    is_pressed;
+    gboolean    time_requestable;
     GtkWidget   *current_widget;
     GtkWidget   *pre_widget;
     GtkWidget   *lyricbox;
+    GtkWidget   *box_bin;
     GtkWidget   *msg;
 };
 
@@ -100,6 +104,9 @@ lyric_show_viewport_update_cursor(LyricShowViewport *lsv);
 
 static void
 lyric_show_viewport_update_current_widget(LyricShowViewport *lsv);
+
+static void
+lyric_show_viewport_set_time_requestable(LyricShowViewport *lsv,gboolean time_requestable);
 
 static void
 lyric_show_viewport_set_time(LyricShow *iface,guint64 time);
@@ -199,6 +206,7 @@ lyric_show_viewport_class_init(LyricShowViewportClass *klass)
                                                         0,
                                                         G_PARAM_CONSTRUCT|G_PARAM_READWRITE)
                                     );
+    g_object_class_override_property (object_class, PROP_TIME_REQUESTABLE, "time-requestable");
 
     g_type_class_add_private (klass, sizeof (LyricShowViewportPrivate));
 
@@ -247,14 +255,18 @@ lyric_show_viewport_constructor(GType                  type,
 #else
     gtk_hbox_new(FALSE,0);
 #endif
+    lsv->priv->box_bin = gtk_bin_instance_new();
 
     gtk_box_pack_start(GTK_BOX(hbox),lsv->priv->msg,TRUE,TRUE,0);
     gtk_box_pack_start(GTK_BOX(hbox),lsv->priv->lyricbox,TRUE,TRUE,0);
     gtk_widget_set_no_show_all(lsv->priv->lyricbox,TRUE);
     gtk_widget_set_no_show_all(lsv->priv->msg,TRUE);
+    gtk_container_add(GTK_CONTAINER(lsv->priv->box_bin),hbox);
     gtk_widget_show_all(hbox);
-    gtk_container_add(GTK_CONTAINER(lsv),hbox);
+    gtk_widget_show_all(lsv->priv->box_bin);
+    gtk_container_add(GTK_CONTAINER(lsv),lsv->priv->box_bin);
 
+    gtk_viewport_set_shadow_type(GTK_VIEWPORT(lsv),GTK_SHADOW_IN);
     return object;
 }
 
@@ -271,6 +283,9 @@ lyric_show_viewport_set_property(GObject        *object,
     {
         case PROP_TIME:
             lsv->priv->current_time = g_value_get_uint64(value);
+        break;
+        case PROP_TIME_REQUESTABLE:
+            lyric_show_viewport_set_time_requestable(lsv,g_value_get_boolean(value));
         break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -290,6 +305,9 @@ lyric_show_viewport_get_property(GObject        *object,
     {
         case PROP_TIME:
             g_value_set_uint64(value,lsv->priv->current_time);
+        break;
+        case PROP_TIME_REQUESTABLE:
+            g_value_set_boolean(value,lsv->priv->time_requestable);
         break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -336,6 +354,7 @@ lyric_show_viewport_get_preferred_height(GtkWidget *widget,
     GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->get_preferred_height(widget,minimum_size,natural_size);
     if(gtk_widget_get_visible(lsv->priv->lyricbox) && *minimum_size > mini_height)
         *minimum_size = mini_height;
+    *natural_size = *natural_size*2;
 ///    g_warning("height(%d,%d)",*minimum_size,*natural_size);
 }
 #else
@@ -367,7 +386,12 @@ lyric_show_viewport_size_allocate(GtkWidget *widget,GtkAllocation *allocation)
     }
 
     GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->size_allocate(widget,allocation);
-
+    if(gtk_widget_get_visible(lsv->priv->lyricbox))
+    {
+        gtk_bin_instance_set_increment_height(GTK_BIN_INSTANCE(lsv->priv->box_bin),allocation->height);
+    }else{
+        gtk_bin_instance_set_increment_height(GTK_BIN_INSTANCE(lsv->priv->box_bin),0);
+    }
 #if 0
     g_warning("x:%5d,y:%5d,width:%6d,heigth:%d",
             allocation->x,allocation->y,
@@ -376,6 +400,7 @@ lyric_show_viewport_size_allocate(GtkWidget *widget,GtkAllocation *allocation)
 
     if(gtk_widget_get_visible(lsv->priv->lyricbox))
     {
+        gdouble value = (lsv->priv->pos+lsv->priv->pressed_pos);///-allocation->height/2.0;
         GtkAdjustment *adj = 
 
 #if GTK_CHECK_VERSION(3,2,0)
@@ -383,9 +408,7 @@ lyric_show_viewport_size_allocate(GtkWidget *widget,GtkAllocation *allocation)
 #else
         gtk_viewport_get_vadjustment(GTK_VIEWPORT(lsv));
 #endif
-
-        gtk_adjustment_set_lower(adj,-allocation->height);
-        gtk_adjustment_set_value(adj,(lsv->priv->pos+lsv->priv->pressed_pos)-allocation->height/2.0);
+        gtk_adjustment_set_value(adj,value);
     }
 }
 
@@ -409,6 +432,19 @@ lyric_show_viewport_draw(GtkWidget  *widget,cairo_t *cr)
                 gtk_widget_get_allocated_width(widget),y1);
                                    
     }
+
+#if 0
+    GtkAllocation alc = {0};
+    gint x,y;
+    gint w,h;
+    gdk_window_get_position(bin,&x,&y);
+    w = gdk_window_get_width(bin);
+    h = gdk_window_get_height(bin);
+    gtk_widget_get_allocation(widget,&alc);
+    
+    g_warning("x0:%d,y0:%d,w0:%d,h0:%d",x,y,w,h);
+    g_warning("x1:%d,y1:%d,w1:%d,h1:%d",alc.y,alc.y,alc.width,alc.height);
+#endif
     return FALSE;
 }
 #else
@@ -439,6 +475,7 @@ lyric_show_viewport_expose(GtkWidget    *widget,GdkEventExpose *event)
 
     GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->expose_event(widget,event);
 
+///    g_warning("is_pressed:%d",lsv->priv->is_pressed);
     if(lsv->priv->is_pressed)
     {
         gtk_paint_hline(widget->style,
@@ -448,7 +485,7 @@ lyric_show_viewport_expose(GtkWidget    *widget,GdkEventExpose *event)
                         widget,
                         NULL,
                         0,widget->allocation.width,
-                        lsv->priv->pos+lsv->priv->pressed_pos);//widget->allocation.height/2.0);
+                        lsv->priv->pos+lsv->priv->pressed_pos+widget->allocation.height/2.0);
     }
     return FALSE;
 }
@@ -466,6 +503,9 @@ lyric_show_viewport_button_press(GtkWidget    *widget,GdkEventButton *event)
     {
         goto ext;
     }
+
+    if(event->button != 1)
+        goto ext;
 
 #if GTK_CHECK_VERSION(3,2,0)
     gtk_widget_get_mouse_position(widget,(GdkEvent*) event,&x,&y);
@@ -502,17 +542,17 @@ lyric_show_viewport_button_release(GtkWidget    *widget,GdkEventButton *event)
 
     lsv->priv->is_pressed = FALSE;
 
-    if(is_pressed)
+    if(is_pressed && lsv->priv->time_requestable)
     {
         t = lyric_show_viewport_get_requested_time(lsv);
-        ///lsv->priv->pos += lsv->priv->pressed_pos ;
+        lsv->priv->pos += lsv->priv->pressed_pos ;
         lsv->priv->pressed_pos = 0;
 
         lyric_show_viewport_update_cursor(lsv);
         lyric_show_time_request(LYRIC_SHOW(lsv),t);
-    }
-///    lyric_show_viewport_update_current_widget(lsv);
-
+    }else
+        lyric_show_viewport_update_current_widget(lsv);
+    gtk_widget_queue_resize(widget);
 ///    GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->button_release_event(widget,event);
     return FALSE;
 }
@@ -527,27 +567,31 @@ lyric_show_viewport_motion_notify(GtkWidget *widget,GdkEventMotion *event)
     gint tmp_pos = 0;
     GtkAllocation alc = {0};
 
+    if(lsv->priv->time_requestable)
+    {
+
 #if GTK_CHECK_VERSION(3,2,0)
-    gtk_widget_get_mouse_position(widget,(GdkEvent*)event,&x,&y);
+        gtk_widget_get_mouse_position(widget,(GdkEvent*)event,&x,&y);
 #else
-    gtk_widget_get_pointer(widget,&x,&y);
+        gtk_widget_get_pointer(widget,&x,&y);
 #endif
 
-    tmp_pos = lsv->priv->pressed_y - y;
-    gtk_widget_get_allocation(lsv->priv->lyricbox,&alc);
-    if(tmp_pos + lsv->priv->pos > 0)
-    {
-        if(tmp_pos + lsv->priv->pos >= alc.height)
-            tmp_pos = alc.height-lsv->priv->pos-1;
-    }else{
-        tmp_pos = -lsv->priv->pos;
+        tmp_pos = lsv->priv->pressed_y - y;
+        gtk_widget_get_allocation(lsv->priv->lyricbox,&alc);
+        if(tmp_pos + lsv->priv->pos > 0)
+        {
+            if(tmp_pos + lsv->priv->pos >= alc.height)
+                tmp_pos = alc.height-lsv->priv->pos-1;
+        }else{
+            tmp_pos = -lsv->priv->pos;
+        }
+        lsv->priv->pressed_pos = tmp_pos;
+        gtk_widget_queue_resize(widget);
     }
-    lsv->priv->pressed_pos = tmp_pos;
     if(GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->motion_notify_event)
     {
         GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->motion_notify_event(widget,event);
     }
-    gtk_widget_queue_resize(widget);
     return FALSE;
 }
 
@@ -555,7 +599,9 @@ static void
 lyric_show_viewport_update_cursor(LyricShowViewport *lsv)
 {
     GdkWindow *win = gtk_widget_get_window(GTK_WIDGET(lsv));
-    if(lsv->priv->is_pressed)
+    if(!gtk_widget_get_realized(GTK_WIDGET(lsv)))
+        return;
+    if(lsv->priv->is_pressed&&lsv->priv->time_requestable)
     {
         GdkCursor *cur = gdk_cursor_new(GDK_FLEUR);
         gdk_window_set_cursor(win,cur);
@@ -572,7 +618,7 @@ lyric_show_viewport_update_cursor(LyricShowViewport *lsv)
 static void
 lyric_show_viewport_update_current_widget(LyricShowViewport *lsv)
 {
-    if(!lsv->priv->is_pressed && lsv->priv->current_widget)
+    if((!lsv->priv->is_pressed || !lsv->priv->time_requestable) && lsv->priv->current_widget)
     {
         GtkAllocation alc0,alc1;
         const gchar *color_string = "blue";
@@ -673,6 +719,18 @@ lyric_show_viewport_get_requested_time(LyricShowViewport *lsv)
     }
     g_list_free(list);
     return res;
+}
+
+static void
+lyric_show_viewport_set_time_requestable(LyricShowViewport *lsv,gboolean time_requestable)
+{
+    if(lsv->priv->time_requestable != time_requestable)
+    {
+        lsv->priv->time_requestable = time_requestable;
+        lyric_show_viewport_update_cursor(lsv);
+        lyric_show_viewport_update_current_widget(lsv);
+        g_object_notify(G_OBJECT(lsv),"time-requestable");
+    }
 }
 
 static const gchar*
@@ -777,7 +835,7 @@ lyric_show_viewport_new(void)
     return GTK_WIDGET(g_object_new(LYRIC_SHOW_VIEWPORT_TYPE,NULL));
 }
 
-#ifdef on_test_lyric_show_view_port
+#ifdef on_lyric_show_viewport
 #define timeout_value 100
 
 static guint64 line_time = 0;
@@ -796,6 +854,7 @@ time_request(LyricShow *lsw,guint64 t)
 {
     line_time = t;
     g_warning("%s:%lu",__FUNCTION__,t);
+    lyric_show_set_time(LYRIC_SHOW(lsw),t);
 }
 
 int main(int argc,char**argv)
@@ -814,6 +873,7 @@ int main(int argc,char**argv)
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     lsv = lyric_show_viewport_new();
     lyric_show_set_text(lsv,"Hello world");
+    lyric_show_set_lyric(lsv,argv[1]);
     gtk_container_add(GTK_CONTAINER(window),lsv);
     gtk_window_resize(GTK_WINDOW(window),350,450);
     gtk_window_set_position(GTK_WINDOW(window),GTK_WIN_POS_CENTER);

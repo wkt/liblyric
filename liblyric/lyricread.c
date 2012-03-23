@@ -105,6 +105,7 @@ encode_to_originally(const gchar *str)
     {
         fprintf(stderr,"%s",error->message);
         g_error_free(error);
+        pgb = NULL;
     }
     return pgb;
 }

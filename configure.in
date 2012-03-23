@@ -76,23 +76,29 @@ esac],[gtk2=false])
 
 AM_CONDITIONAL([USE_GTK2], [test x$gtk2 = xtrue])
 
+GTK2=gtk+-2.0
+GTK2_REQUIRED=2.22.0
+AC_SUBST(GTK2)
+
+GTK3=gtk+-3.0
+GTK3_REQUIRED=3.0.0
+AC_SUBST(GTK3)
+
+
 if test x${gtk2} == xtrue ;then
-    GTK=gtk+-2.0
-    GTK_REQUIRED=2.12.0
-    GTK_NAME=gtk2
-else
-    GTK=gtk+-3.0
-    GTK_REQUIRED=3.2.0
-    GTK_NAME=gtk3
+PKG_CHECK_MODULES(GTK2,[
+    $GTK2 >= $GTK2_REQUIRED
+])
 fi
 
-AC_SUBST(GTK)
-AC_SUBST(GTK_NAME)
+PKG_CHECK_MODULES(GTK3,[
+    $GTK3 >= $GTK3_REQUIRED
+])
+
 
 GLIB_REQUIRED=2.24.0
 
-PKG_CHECK_MODULES(GTK, [
-	$GTK >= $GTK_REQUIRED
+PKG_CHECK_MODULES(GLIB, [
 	glib-2.0 >= $GLIB_REQUIRED
 	gthread-2.0
 ])
@@ -147,7 +153,8 @@ fi
 
 AC_OUTPUT([
 	Makefile
-	liblyric.pc
+	liblyric-gtk2.pc
+	liblyric-gtk3.pc
 	liblyric/Makefile
 	po/Makefile.in
     totem-plugin/Makefile
@@ -155,8 +162,8 @@ AC_OUTPUT([
 	data/Makefile
 ])
 
-echo -e "\n\n"
+echo -e "\n"
 echo "       "'${prefix}'=${prefix}
-echo "       GTK=$GTK"
+echo "       GTK2=$gtk2"
 echo "       TEST="$TEST
 echo

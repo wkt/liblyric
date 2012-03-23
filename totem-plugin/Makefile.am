@@ -20,7 +20,7 @@ libtotem_lyric_la_SOURCES = totemlyricplugin.c
 libtotem_lyric_la_CFLAGS   = $(TOTEM_CFLAGS)
 libtotem_lyric_la_LDFLAGS = $(modules_flags)        \
                             $(TOTEM_LIBS)           \
-                            ../liblyric/liblyric-$(GTK_NAME).la \
+                            ../liblyric/liblyric-gtk3.la \
                             $(NULL)
 
 libtotem_lyric_la_LIBADD =

@@ -1,7 +1,17 @@
+#ifdef HAVE_CONFIG_H
+#   include <config.h>
+#endif
+
 #include <gtk/gtk.h>
 #include "LyricShow.h"
 
 #include "common-glue.h"
+
+#ifdef GETTEXT_PACKAGE
+#include <glib/gi18n-lib.h>
+#else
+#include <glib/gi18n.h>
+#endif
 
 enum
 {
@@ -24,6 +34,13 @@ lyric_show_base_init (gpointer g_class)
                  G_TYPE_NONE,
                  1,
                  G_TYPE_UINT64);
+
+  g_object_interface_install_property (g_class,
+				       g_param_spec_boolean ("time-requestable",
+							     N_("time-requestable"),
+							     N_("control emit time-request or not"),
+							     TRUE,
+							     G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
 }
 
 GType                   

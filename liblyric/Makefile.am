@@ -15,7 +15,7 @@ libtool_opts =							\
 	$(NULL)
 
 if USE_GTK2
-lib_LTLIBRARIES=liblyric-gtk2.la
+lib_LTLIBRARIES=liblyric-gtk2.la liblyric-gtk3.la
 else
 lib_LTLIBRARIES=liblyric-gtk3.la
 endif
@@ -43,20 +43,22 @@ liblyric_la_SOURCES =                       \
                 lyriclinewidget.c  			\
                 lyriclinewidget.h			\
                 lyricshowviewport.c  		\
+                gtkbininstance.c			\
+                gtkbininstance.h			\
                 $(NULL)
 
 
-liblyric_la_LDFLAGS = $(CURL_LIBS) $(GTK_LIBS) $(LIBXML2_LIBS) $(libtool_opts)
-liblyric_la_CFLAGS = $(CURL_CFLAGS) $(GTK_CFLAGS) $(LIBXML2_CFLAGS)
+liblyric_la_LDFLAGS = $(CURL_LIBS) $(GLIB_LIBS) $(LIBXML2_LIBS) $(libtool_opts)
+liblyric_la_CFLAGS = $(CURL_CFLAGS) $(GLIB_CFLAGS) $(LIBXML2_CFLAGS)
 ##liblyric_la_LIBADD = 
 
-liblyric_gtk2_la_SOURCES = $(liblyric_la_SOURCES)
-liblyric_gtk2_la_CFLAGS = $(liblyric_la_CFLAGS)
-liblyric_gtk2_la_LDFLAGS = $(liblyric_la_LDFLAGS)
+liblyric_gtk2_la_SOURCES = $(liblyric_la_SOURCES) 
+liblyric_gtk2_la_CFLAGS = $(liblyric_la_CFLAGS)  $(GTK2_CFLAGS)
+liblyric_gtk2_la_LDFLAGS = $(liblyric_la_LDFLAGS) $(GTK2_LIBS)
 
 liblyric_gtk3_la_SOURCES = $(liblyric_la_SOURCES)
-liblyric_gtk3_la_CFLAGS = $(liblyric_la_CFLAGS)
-liblyric_gtk3_la_LDFLAGS = $(liblyric_la_LDFLAGS)
+liblyric_gtk3_la_CFLAGS = $(liblyric_la_CFLAGS) $(GTK3_CFLAGS)
+liblyric_gtk3_la_LDFLAGS = $(liblyric_la_LDFLAGS) $(GTK3_LIBS)
 
 lyricincdir=$(includedir)/liblyric
 lyricinc_HEADERS =  LyricSearch.h       \
@@ -67,15 +69,11 @@ lyricinc_HEADERS =  LyricSearch.h       \
 					lyricshowviewport.h			\
                     $(NULL)
 if TEST
-noinst_PROGRAMS = test_lyric test_lyric_show_viewport
+noinst_PROGRAMS =  lyric_show_viewport
 else
 noinst_PROGRAMS = 
 endif
 
-test_lyric_SOURCES = $(liblyric_la_SOURCES)
-test_lyric_CFLAGS = $(liblyric_la_CFLAGS) -Dtest_lyric_search
-test_lyric_LDFLAGS = $(liblyric_la_LDFLAGS)
-
-test_lyric_show_viewport_SOURCES = $(liblyric_la_SOURCES)
-test_lyric_show_viewport_CFLAGS = $(liblyric_la_CFLAGS) -Don_test_lyric_show_view_port
-test_lyric_show_viewport_LDFLAGS = $(liblyric_la_LDFLAGS)
+lyric_show_viewport_SOURCES = $(liblyric_la_SOURCES)
+lyric_show_viewport_CFLAGS = $(liblyric_la_CFLAGS) -Don_lyric_show_viewport $(GTK2_CFLAGS)
+lyric_show_viewport_LDFLAGS = $(liblyric_la_LDFLAGS) $(GTK2_LIBS)
