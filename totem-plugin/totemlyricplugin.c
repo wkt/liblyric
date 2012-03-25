@@ -177,6 +177,7 @@ impl_create_configure_widget (PeasGtkConfigurable *configurable)
 static void
 file_opened(TotemObject *totem,const gchar *mrl,TotemLyricPlugin *pi)
 {
+    lyric_show_set_text(pi->priv->lsw,_("Lyric show"));
     lyric_search_set_mrl(pi->priv->lys,mrl);
 }
 
@@ -185,6 +186,7 @@ file_closed(TotemObject *totem,TotemLyricPlugin *pi)
 {
     lyric_search_set_info(pi->priv->lys,NULL,NULL,NULL);
     lyric_show_set_text(pi->priv->lsw,_("Lyric Show"));
+    g_warning("file-closed");
 }
 
 #define SET_INFO(n) \
@@ -218,9 +220,7 @@ metadata_updated(TotemObject *totem,
         g_free(t);
     }
     SET_INFO(album)
-    g_warning("track_num:%d",track_num);
     lyric_search_find_lyric(pi->priv->lys);
-    g_warning("track_num:%d end",track_num);
 }
 
 static void
@@ -229,7 +229,7 @@ seekable_notify(TotemObject *totem,
                     TotemLyricPlugin *pi)
 {
     g_object_set(pi->priv->lsw,"time-requestable",totem_is_seekable(totem),NULL);
-    g_warning("seekable:%d",totem_is_seekable(totem));
+///    g_warning("seekable:%d",totem_is_seekable(totem));
 }
 
 static gboolean
@@ -237,7 +237,11 @@ timeout_update(TotemLyricPlugin *pi)
 {
     if(totem_is_playing(pi->priv->totem))
     {
-        lyric_show_set_time(pi->priv->lsw,totem_get_current_time(pi->priv->totem));
+        gint64 t = totem_get_current_time(pi->priv->totem);
+        if(t > 0)
+        {
+            lyric_show_set_time(pi->priv->lsw,(gint64)t);
+        }
     }
     return TRUE;
 }
@@ -249,10 +253,16 @@ lyric_updated(LyricSearch *lys,const gchar *lyricfile,TotemLyricPlugin *pi)
 }
 
 static void
-time_request(LyricShow *lsw,guint64 t,TotemLyricPlugin *pi)
+time_request(LyricShow *lsw,gint64 t,TotemLyricPlugin *pi)
 {
     totem_action_seek_time(pi->priv->totem,t,FALSE);
     totem_action_play(pi->priv->totem);
+}
+
+static void
+search_request(LyricShow *lsw,TotemLyricPlugin *pi)
+{
+    lyric_search_manual_get_lyric(pi->priv->lys);
 }
 
 static gboolean 
@@ -278,6 +288,7 @@ impl_activate_real(TotemLyricPlugin *pi, TotemObject *totem, GError **error)
     g_signal_connect(pi->priv->lys,"lyric-updated",G_CALLBACK(lyric_updated),pi);
 
     g_signal_connect(pi->priv->lsw,"time-request",G_CALLBACK(time_request),pi);
+    g_signal_connect(pi->priv->lsw,"search-request",G_CALLBACK(search_request),pi);
 
     pi->priv->timeout_id = g_timeout_add(200,(GSourceFunc)timeout_update,pi);
 

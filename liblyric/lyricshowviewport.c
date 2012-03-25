@@ -18,6 +18,7 @@
 #include "LyricShow.h"
 #include "lyriclinewidget.h"
 #include "gtkbininstance.h"
+#include "lyricshowmenu.h"
 
 #ifdef GETTEXT_PACKAGE
 #include <glib/gi18n-lib.h>
@@ -36,7 +37,7 @@ enum
 struct _LyricShowViewportPrivate
 {
     LyricInfo   *info;
-    guint64     current_time;
+    gint64     current_time;
     gint        pos;
     gint        pressed_pos;
     gint        pressed_y;
@@ -109,16 +110,16 @@ static void
 lyric_show_viewport_set_time_requestable(LyricShowViewport *lsv,gboolean time_requestable);
 
 static void
-lyric_show_viewport_set_time(LyricShow *iface,guint64 time);
+lyric_show_viewport_set_time(LyricShow *iface,gint64 time);
 
-static guint64
+static gint64
 lyric_show_viewport_get_requested_time(LyricShowViewport *lsv);
 
 static void
 lyric_show_viewport_iface_interface_init(LyricShowIface *iface);
 
 
-///copy from gtk_widget_get_pointer in gtk+3.0
+///参照gtk+3.0中的gtk_widget_get_pointer写的
 inline static void
 gtk_widget_get_mouse_position(GtkWidget *widget,GdkEvent *event,gint *x,gint *y)
 {
@@ -196,17 +197,9 @@ lyric_show_viewport_class_init(LyricShowViewportClass *klass)
 
     widget_class->motion_notify_event   = lyric_show_viewport_motion_notify;
 
-    g_object_class_install_property(object_class,
-                                    PROP_TIME,
-                                    g_param_spec_uint64("time",
-                                                        "time",
-                                                        "time",
-                                                        0,
-                                                        G_MAXUINT64,
-                                                        0,
-                                                        G_PARAM_CONSTRUCT|G_PARAM_READWRITE)
-                                    );
-    g_object_class_override_property (object_class, PROP_TIME_REQUESTABLE, "time-requestable");
+    g_object_class_override_property(object_class,PROP_TIME,"time");
+
+    g_object_class_override_property(object_class, PROP_TIME_REQUESTABLE, "time-requestable");
 
     g_type_class_add_private (klass, sizeof (LyricShowViewportPrivate));
 
@@ -282,7 +275,7 @@ lyric_show_viewport_set_property(GObject        *object,
     switch(property_id)
     {
         case PROP_TIME:
-            lsv->priv->current_time = g_value_get_uint64(value);
+            lsv->priv->current_time = g_value_get_int64(value);
         break;
         case PROP_TIME_REQUESTABLE:
             lyric_show_viewport_set_time_requestable(lsv,g_value_get_boolean(value));
@@ -304,7 +297,7 @@ lyric_show_viewport_get_property(GObject        *object,
     switch(property_id)
     {
         case PROP_TIME:
-            g_value_set_uint64(value,lsv->priv->current_time);
+            g_value_set_int64(value,lsv->priv->current_time);
         break;
         case PROP_TIME_REQUESTABLE:
             g_value_set_boolean(value,lsv->priv->time_requestable);
@@ -433,18 +426,6 @@ lyric_show_viewport_draw(GtkWidget  *widget,cairo_t *cr)
                                    
     }
 
-#if 0
-    GtkAllocation alc = {0};
-    gint x,y;
-    gint w,h;
-    gdk_window_get_position(bin,&x,&y);
-    w = gdk_window_get_width(bin);
-    h = gdk_window_get_height(bin);
-    gtk_widget_get_allocation(widget,&alc);
-    
-    g_warning("x0:%d,y0:%d,w0:%d,h0:%d",x,y,w,h);
-    g_warning("x1:%d,y1:%d,w1:%d,h1:%d",alc.y,alc.y,alc.width,alc.height);
-#endif
     return FALSE;
 }
 #else
@@ -529,7 +510,7 @@ lyric_show_viewport_button_release(GtkWidget    *widget,GdkEventButton *event)
     LyricShowViewport *lsv;
     lsv = LYRIC_SHOW_VIEWPORT(widget);
 
-    guint64 t=0;
+    gint64 t=0;
     gint x = 0;
     gint y = 0;
     gboolean is_pressed = lsv->priv->is_pressed;
@@ -552,6 +533,11 @@ lyric_show_viewport_button_release(GtkWidget    *widget,GdkEventButton *event)
         lyric_show_time_request(LYRIC_SHOW(lsv),t);
     }else
         lyric_show_viewport_update_current_widget(lsv);
+    if(event->button == 3)
+    {
+        GtkWidget *menu = lyric_show_menu_get_for(LYRIC_SHOW(widget));
+        gtk_menu_popup(GTK_MENU(menu),NULL,NULL,NULL,NULL,event->button,event->time);
+    }
     gtk_widget_queue_resize(widget);
 ///    GTK_WIDGET_CLASS(lyric_show_viewport_parent_class)->button_release_event(widget,event);
     return FALSE;
@@ -665,8 +651,8 @@ lyric_show_viewport_sync_time_line_widget(LyricShowViewport *lsv)
     GList *l,*list;
     LyricLineWidget  *llw = NULL;
     GtkWidget  *pre_llw = NULL;
-    guint64 pre_time = 0;
-    guint64 line_time = 0;
+    gint64 pre_time = 0;
+    gint64 line_time = 0;
     list = gtk_container_get_children(GTK_CONTAINER(lsv->priv->lyricbox));
     for(l=list;l;l=l->next)
     {
@@ -696,10 +682,10 @@ lyric_show_viewport_set_lyric_visible(LyricShowViewport *lsv,gboolean visible)
     gtk_widget_set_visible(lsv->priv->lyricbox,visible);
 }
 
-static guint64
+static gint64
 lyric_show_viewport_get_requested_time(LyricShowViewport *lsv)
 {
-    guint64 res = 0;
+    gint64 res = 0;
     GList *l,*list;
     gint current_y = 0;
     GtkWidget *llw = NULL;
@@ -740,7 +726,7 @@ lyric_show_viewport_get_name(LyricShow *iface)
 }
 
 static void
-lyric_show_viewport_set_time(LyricShow *iface,guint64 time)
+lyric_show_viewport_set_time(LyricShow *iface,gint64 time)
 {
     LyricShowViewport *lsv;
     lsv = LYRIC_SHOW_VIEWPORT(iface);
@@ -838,7 +824,7 @@ lyric_show_viewport_new(void)
 #ifdef on_lyric_show_viewport
 #define timeout_value 100
 
-static guint64 line_time = 0;
+static gint64 line_time = 0;
 
 static gboolean
 idle_timeout(LyricShowViewport *lsv)
@@ -850,7 +836,7 @@ idle_timeout(LyricShowViewport *lsv)
 }
 
 static void
-time_request(LyricShow *lsw,guint64 t)
+time_request(LyricShow *lsw,gint64 t)
 {
     line_time = t;
     g_warning("%s:%lu",__FUNCTION__,t);

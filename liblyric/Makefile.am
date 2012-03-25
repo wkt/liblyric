@@ -45,6 +45,8 @@ liblyric_la_SOURCES =                       \
                 lyricshowviewport.c  		\
                 gtkbininstance.c			\
                 gtkbininstance.h			\
+                lyricshowmenu.c				\
+                lyricshowmenu.h				\
                 $(NULL)
 
 

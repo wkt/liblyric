@@ -26,7 +26,6 @@ struct _LyricSearch
 {
 	GObject parent;
 
-    
 
 	gchar *artist;
 	gchar *title;
@@ -729,7 +728,7 @@ lyric_search_auto_get_lyric(LyricSearch *lys)
 
 }
 
-void
+static void
 lyric_search_reset_downloader(LyricSearch *lys)
 {
 	gpointer tmp = lys->priv->downloader;
@@ -743,7 +742,7 @@ lyric_search_reset_downloader(LyricSearch *lys)
     }
 }
 
-void
+static void
 lyric_search_present_dialog(LyricSearch *lys,gboolean   download_sensitive)
 {
 	gtk_entry_set_text(lys->artist_entry,lys->artist?lys->artist:"");
@@ -753,59 +752,6 @@ lyric_search_present_dialog(LyricSearch *lys,gboolean   download_sensitive)
 
 	gtk_window_present(lys->mainwin);
 }
-
-gboolean
-lyric_search_manual_get_lyric(LyricSearch *lys)
-{
-	lys->priv->type = LYRIC_MANUAL_SEARCH;
-	lyric_down_loader_cancel(lys->priv->downloader);
-	if(!lys->mainwin || !GTK_IS_WINDOW(lys->mainwin)){
-		GtkDialog *msg;
-		msg = GTK_DIALOG(gtk_message_dialog_new(NULL,
-						GTK_DIALOG_MODAL,
-						GTK_MESSAGE_ERROR,
-						GTK_BUTTONS_CLOSE,
-						_("Can't get a window")));
-		gtk_dialog_run(msg);
-		gtk_widget_destroy(msg);
-		return FALSE;
-	}
-    lyric_search_present_dialog(lys,FALSE);
-	return TRUE;
-}
-
-void
-lyric_search_find_lyric(LyricSearch *lys)
-{
-    lyric_search_make_lyricfile(lys);
-    lys->priv->type = LYRIC_SEARCH_NONE;
-    lyric_search_show_info(lys);
-	if(lyric_search_has_local_lyric(lys)){
-		lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES);
-	}else{
-        lyric_search_reset_downloader(lys);
-        lyric_search_auto_get_lyric(lys);
-    }
-}
-
-void
-lyric_search_hide(LyricSearch *lys)
-{
-	gtk_widget_hide(GTK_WIDGET(lys->mainwin));
-}
-
-const gchar*
-lyric_search_get_lyricfile(LyricSearch* lys)
-{
-	return (const gchar*)lys->lyricfile;
-}
-
-LyricSearch*
-lyric_search_new(void)
-{
-	return LYRIC_SEARCH(g_object_new(LYRIC_SEARCH_TYPE,NULL));
-}
-
 
 static void
 lyric_search_search_button_clicked(GtkButton *button,LyricSearch *lys)
@@ -1108,6 +1054,61 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 		break;
 	}
 }
+
+gboolean
+lyric_search_manual_get_lyric(LyricSearch *lys)
+{
+	lys->priv->type = LYRIC_MANUAL_SEARCH;
+	lyric_down_loader_cancel(lys->priv->downloader);
+	if(!lys->mainwin || !GTK_IS_WINDOW(lys->mainwin)){
+		GtkDialog *msg;
+		msg = GTK_DIALOG(gtk_message_dialog_new(NULL,
+						GTK_DIALOG_MODAL,
+						GTK_MESSAGE_ERROR,
+						GTK_BUTTONS_CLOSE,
+						_("Can't get a window")));
+		gtk_dialog_run(msg);
+		gtk_widget_destroy(msg);
+		return FALSE;
+	}
+    lyric_search_lyricview_update(lys,NULL);
+    lyric_search_present_dialog(lys,FALSE);
+	return TRUE;
+}
+
+void
+lyric_search_find_lyric(LyricSearch *lys)
+{
+    lyric_search_make_lyricfile(lys);
+    lys->priv->type = LYRIC_SEARCH_NONE;
+    lyric_search_show_info(lys);
+	if(lyric_search_has_local_lyric(lys)){
+		lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES);
+	}else{
+        lyric_search_reset_downloader(lys);
+        lyric_search_auto_get_lyric(lys);
+    }
+}
+
+void
+lyric_search_hide(LyricSearch *lys)
+{
+	gtk_widget_hide(GTK_WIDGET(lys->mainwin));
+}
+
+const gchar*
+lyric_search_get_lyricfile(LyricSearch* lys)
+{
+	return (const gchar*)lys->lyricfile;
+}
+
+LyricSearch*
+lyric_search_new(void)
+{
+	return LYRIC_SEARCH(g_object_new(LYRIC_SEARCH_TYPE,NULL));
+}
+
+
 
 #ifdef test_lyric_search
 

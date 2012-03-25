@@ -18,11 +18,12 @@ struct _LyricShowIface
     GTypeInterface g_iface;
 
     /*  signal  */
-    void (*time_request)(LyricShow *lsw,guint64);
+    void (*time_request)(LyricShow *lsw,gint64);
+    void (*search_request)(LyricShow *lsw);
 
     /*  function */
     const gchar *(*get_name)(LyricShow *lsw);
-    void (*set_time)(LyricShow *lsw,guint64 time);
+    void (*set_time)(LyricShow *lsw,gint64 time);
     void (*set_lyric)(LyricShow *lsw,const gchar *lyric_file);
     void (*set_text)(LyricShow *lsw,const gchar *text);
 };
@@ -34,7 +35,7 @@ const gchar *
 lyric_show_get_name(LyricShow *lsw);
 
 void
-lyric_show_set_time(LyricShow *lsw,guint64 time);
+lyric_show_set_time(LyricShow *lsw,gint64 time);
 
 void
 lyric_show_set_lyric(LyricShow *lsw,const gchar *lyric_file);
@@ -43,6 +44,9 @@ void
 lyric_show_set_text(LyricShow *lsw,const gchar *text);
 
 void
-lyric_show_time_request(LyricShow *lsw,guint64 t);
+lyric_show_time_request(LyricShow *lsw,gint64 t);
+
+void
+lyric_show_search_request(LyricShow *lsw);
 
 #endif ///LYRIC_SHOW_IFACE_H

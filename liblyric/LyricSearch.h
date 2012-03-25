@@ -81,7 +81,7 @@ void
 lyric_search_find_lyric(LyricSearch *lys);
 
 gboolean
-lyric_search_manual_lyric(LyricSearch *lys);
+lyric_search_manual_get_lyric(LyricSearch *lys);
 
 gboolean
 lyric_search_is_ready(LyricSearch *lys);

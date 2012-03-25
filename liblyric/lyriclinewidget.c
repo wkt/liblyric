@@ -29,7 +29,7 @@ enum
 
 struct _LyricLineWidgetPrivate
 {
-    guint64 time;
+    gint64 time;
 };
 
 static void
@@ -74,10 +74,10 @@ lyric_line_widget_class_init(LyricLineWidgetClass *klass)
 
     g_object_class_install_property(object_class,
                                     PROP_TIME,
-                                    g_param_spec_uint64("time",
+                                    g_param_spec_int64("time",
                                                        "time",
                                                        "time",
-                                                       0,
+                                                       G_MININT64,
                                                        G_MAXINT64,
                                                        0,
                                                        G_PARAM_CONSTRUCT|G_PARAM_READWRITE)
@@ -122,7 +122,7 @@ lyric_line_widget_set_property(GObject        *object,
     switch(property_id)
     {
         case PROP_TIME:
-            llw->priv->time = g_value_get_uint64(value);
+            llw->priv->time = g_value_get_int64(value);
         break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -141,7 +141,7 @@ lyric_line_widget_get_property(GObject        *object,
     switch(property_id)
     {
         case PROP_TIME:
-            g_value_set_uint64(value,llw->priv->time);
+            g_value_set_int64(value,llw->priv->time);
         break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -162,14 +162,14 @@ lyric_line_widget_finalize(GObject        *object)
     }
 }
 
-guint64
+gint64
 lyric_line_widget_get_time(LyricLineWidget *llw)
 {
     return llw->priv->time;
 }
 
 GtkWidget*
-lyric_line_widget_new(guint64 time,const gchar *label)
+lyric_line_widget_new(gint64 time,const gchar *label)
 {
     return GTK_WIDGET(g_object_new(LYRIC_LINE_WIDGET_TYPE,
                                   "time",time,

@@ -103,7 +103,7 @@ encode_to_originally(const gchar *str)
     gchar* pgb = g_convert(str, -1, "iso-8859-1", "utf-8", NULL, NULL, &error);
     if(error)
     {
-        fprintf(stderr,"%s",error->message);
+        fprintf(stderr,"%s to originally %s\n",str,error->message);
         g_error_free(error);
         pgb = NULL;
     }
@@ -133,15 +133,15 @@ guess_string_to_utf8(const gchar *str)
 gchar *
 guess_encode_to_utf8(const gchar *str)
 {
-    gchar *orig;
-    gchar *ret_str;
+    gchar *orig = NULL;
+    gchar *ret_str = NULL;
 
     orig = encode_to_originally(str);
     if(orig){
         ret_str = guess_string_to_utf8(orig);
         g_free(orig);
     }else{
-        ret_str = guess_string_to_utf8(str);
+        ///ret_str = guess_string_to_utf8(str);
     }
     return ret_str;
 }
@@ -212,11 +212,11 @@ lyric_line_tag(const gchar *s,gchar **next)
     return r;
 }
 
-guint64
+gint64
 lyric_line_tag_time(const gchar *tag)
 {
     gint64 t = 0;
-    t = g_ascii_strtoull(tag,NULL,10)*60*1000;
+    t = g_ascii_strtoll(tag,NULL,10)*60*1000;
     t = t+g_ascii_strtod(tag+3,NULL)*1000;
     return t;
 }
@@ -234,7 +234,6 @@ lyric_read(const gchar *filename)
     gchar *tmp_str = NULL;
     gchar *next_pt = NULL;
     gint64 *time_pt = NULL;
-    goffset fset = 0;
     LyricInfo *lyricinfo = NULL;
     LyricLine *ll = NULL;
 
@@ -262,6 +261,8 @@ lyric_read(const gchar *filename)
                 lyricinfo->album = g_strdup(tmp_str+3);
             }else if(g_ascii_strncasecmp("by:",tmp_str,3) == 0){
                 lyricinfo->author = g_strdup(tmp_str+3);
+            }else if(g_ascii_strncasecmp("offset:",tmp_str,7) == 0){
+                lyricinfo->offset = g_ascii_strtoll(tmp_str+7,NULL,10);
             }else if(isdigit(pt[1])){
                 pt = next_pt;
                 time_pt = g_new0(gint64,1);
@@ -296,6 +297,15 @@ lyric_info_get_line(LyricInfo *info,gsize n)
 {
     const LyricLine *ll = g_list_nth_data(info->content,n);
     return ll;
+}
+
+void
+lyric_info_add_end_line(LyricInfo *info,gint64 t)
+{
+    LyricLine *ll = g_new0(LyricLine,1);
+    ll->time = t;
+    ll->line = NULL;
+    info->content = g_list_append(info->content,ll);
 }
 
 gsize

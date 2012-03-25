@@ -13,7 +13,7 @@ typedef struct _LyricLine LyricLine;
 
 struct _LyricLine
 {
-    guint64 time;
+    gint64 time;
     gchar  *line;
 };
 
@@ -25,7 +25,7 @@ struct _LyricInfo
   gchar   *artist;
   gchar   *album;
   gchar   *author;
-  goffset offset;
+  gint64    offset;
   gpointer  content;
   void (*content_free)(gpointer);
 };
@@ -60,6 +60,9 @@ lyric_info_free(LyricInfo *info);
 
 const LyricLine*
 lyric_info_get_line(LyricInfo *info,gsize n);
+
+void
+lyric_info_add_end_line(LyricInfo *info,gint64 t);
 
 gsize
 lyric_info_get_n_lines(LyricInfo *info);

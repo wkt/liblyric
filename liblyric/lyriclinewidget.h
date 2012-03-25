@@ -46,11 +46,11 @@ struct _LyricLineWidgetClass
 GType
 lyric_line_widget_get_type(void);
 
-guint64
+gint64
 lyric_line_widget_get_time(LyricLineWidget *llw);
 
 GtkWidget*
-lyric_line_widget_new(guint64 time,const gchar *label);
+lyric_line_widget_new(gint64 time,const gchar *label);
 
 G_END_DECLS
 
