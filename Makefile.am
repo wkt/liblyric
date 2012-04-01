@@ -30,7 +30,7 @@ EXTRA_DIST= intltool-extract.in         \
             $(NULL)
 
 potfile:
-	ls liblyric/*.c data/*.glade >po/POTFILES.in
+	ls liblyric/*.c data/*.glade totem-plugin/*.c totem-plugin/*.plugin.in >po/POTFILES.in
 
 update-po:
 	make -C po update-po

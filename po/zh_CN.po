@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-06-10 22:53+0800\n"
+"POT-Creation-Date: 2012-04-01 23:48+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,90 +17,103 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../liblyric/LyricSearch.c:263
+#: ../liblyric/LyricSearch.c:996
 msgid "ID"
 msgstr ""
 
-#: ../liblyric/LyricSearch.c:270
+#: ../liblyric/LyricSearch.c:1003
 msgid "Artist"
 msgstr "艺术家"
 
-#: ../liblyric/LyricSearch.c:277
+#: ../liblyric/LyricSearch.c:1010
 msgid "Title"
 msgstr "标题"
 
-#: ../liblyric/LyricSearch.c:485
-msgid "<b>Can't find lyric</b>"
-msgstr "<b>搜索不到歌词</b>"
-
-#: ../liblyric/LyricSearch.c:492
-msgid "lyric updated"
-msgstr "歌词已更新"
-
-#: ../liblyric/LyricSearch.c:497
-msgid "<b>Failed to update lyric</b>"
-msgstr "<b>更新歌词失败</b>"
-
-#: ../liblyric/LyricSearch.c:906
+#: ../liblyric/LyricSearch.c:1226
 msgid "Can't get a window"
 msgstr "无法取得窗口"
 
-#: ../liblyric/LyricShowTreeView.c:43
+#: ../liblyric/LyricShow.c:51
+msgid "time-requestable"
+msgstr ""
+
+#: ../liblyric/LyricShow.c:52
+msgid "control emit time-request or not"
+msgstr ""
+
+#: ../liblyric/LyricShowTreeView.c:53
 msgid "SeeSee"
 msgstr "看看"
 
-#: ../liblyric/LyricShowTreeView.c:181
+#: ../liblyric/LyricShowTreeView.c:192
 #, c-format
 msgid "Title:%s"
 msgstr "标题：%s"
 
-#: ../liblyric/LyricShowTreeView.c:191
+#: ../liblyric/LyricShowTreeView.c:202
 #, c-format
 msgid "Artist:%s"
 msgstr "艺术家：%s"
 
-#: ../liblyric/LyricShowTreeView.c:201
+#: ../liblyric/LyricShowTreeView.c:212
 #, c-format
 msgid "Album:%s"
 msgstr "专辑：%s"
 
-#: ../liblyric/LyricShowTreeView.c:211
+#: ../liblyric/LyricShowTreeView.c:222
 #, c-format
 msgid "Author:%s"
 msgstr "作者：%s"
 
-#: ../liblyric/LyricSogouSearch.c:85
+#: ../liblyric/LyricSogouSearch.c:92
 msgid "Sogou"
 msgstr "搜狗"
 
-#: ../liblyric/LyricTtSearch.c:230
+#: ../liblyric/LyricTtSearch.c:242 ../liblyric/LyricTtSearch.c:250
 msgid "TT Search"
 msgstr "千千搜索"
 
 #: ../data/download.glade.h:1
-msgid "<b>Artist:</b>"
-msgstr "<b>艺术家：</b>"
-
-#: ../data/download.glade.h:2
-msgid "<b>Server:</b>"
-msgstr "<b>服务器：</b>"
-
-#: ../data/download.glade.h:3
-msgid "<b>Title:</b>"
-msgstr "<b>标题：</b>"
-
-#: ../data/download.glade.h:4
-msgid "Download"
-msgstr "下载"
-
-#: ../data/download.glade.h:5
-msgid "Save to:"
-msgstr "保存到："
-
-#: ../data/download.glade.h:6
 msgid "Search lyric online and download"
 msgstr "在线搜索和下载歌词"
 
-#: ../data/download.glade.h:7
+#: ../data/download.glade.h:2
+msgid "Download"
+msgstr "下载"
+
+#: ../data/download.glade.h:3
+msgid "<b>Server:</b>"
+msgstr "<b>服务器：</b>"
+
+#: ../data/download.glade.h:4
+msgid "<b>Artist:</b>"
+msgstr "<b>艺术家：</b>"
+
+#: ../data/download.glade.h:5
+msgid "<b>Title:</b>"
+msgstr "<b>标题：</b>"
+
+#: ../data/download.glade.h:6
 msgid "Select one of the result for download:"
 msgstr "请选择下载："
+
+#: ../data/download.glade.h:7
+msgid "Save to:"
+msgstr "保存到："
+
+#: ../data/download.glade.h:8
+msgid "Automatically download lyric"
+msgstr "自动下载歌词"
+
+#: ../data/download.glade.h:9
+msgid "Automatically close after download lyric"
+msgstr "下载完成后自动关闭窗口"
+
+#~ msgid "<b>Can't find lyric</b>"
+#~ msgstr "<b>搜索不到歌词</b>"
+
+#~ msgid "lyric updated"
+#~ msgstr "歌词已更新"
+
+#~ msgid "<b>Failed to update lyric</b>"
+#~ msgstr "<b>更新歌词失败</b>"

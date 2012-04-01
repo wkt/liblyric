@@ -69,6 +69,9 @@ struct _LyricSearch
 struct _LyricSearchPrivate
 {
 	GSList *engine;
+    
+    GtkWidget *auto_get_lyric;
+    GtkWidget *close_after_download;
 
 	LyricSearchType type;
 	LyricDownloader *downloader;
@@ -76,6 +79,7 @@ struct _LyricSearchPrivate
 	gchar    *config;
 	LyricSearchStatus lss;
     gboolean    auto_get_lyric_mode;
+    gboolean    auto_close_download_window;
 };
 
 typedef struct 
@@ -114,6 +118,12 @@ enum
 	ENGINE_BOX_LAST
 };
 
+enum
+{
+    PROP_0,
+    PROP_AUTO_GET_lYRIC,
+    PROP_AUTO_CLOSE_DOWNLOAD_WINDOW,
+};
 
 static GObject*
 lyric_search_constructor(GType type,
@@ -122,6 +132,18 @@ lyric_search_constructor(GType type,
 
 static void
 lyric_search_finalize(GObject *object);
+
+static void
+lyric_search_set_property(GObject        *object,
+                guint               property_id,
+                const GValue        *value,
+                GParamSpec          *pspec);
+
+static void
+lyric_search_get_property(GObject        *object,
+                guint               property_id,
+                GValue        *value,
+                GParamSpec          *pspec);
 
 static void
 lyric_search_set_status(LyricSearch *lys,LyricSearchStatus lss);
@@ -166,6 +188,8 @@ lyric_search_lyricview_config(LyricSearch *lys);
 static void
 lyric_search_engine_box_config(LyricSearch *lys);
 
+static void
+on_toggl_button_toggled(GtkToggleButton *button,LyricSearch *lys);
 
 static guint LYRIC_SEARCH_SIGNALS[SIGNAL_LAST]={0};
 
@@ -186,6 +210,9 @@ lyric_search_class_init(LyricSearchClass *class)
 	objclass->finalize = lyric_search_finalize;
 	objclass->constructor = lyric_search_constructor;
 
+    objclass->set_property = lyric_search_set_property;
+    objclass->get_property = lyric_search_get_property;
+
 	LYRIC_SEARCH_SIGNALS[STATUS_CHANGED] =
 				g_signal_new ("status-changed",
 							G_OBJECT_CLASS_TYPE(class),
@@ -204,6 +231,24 @@ lyric_search_class_init(LyricSearchClass *class)
 							g_cclosure_marshal_VOID__STRING,
 							G_TYPE_NONE,1,
 							G_TYPE_STRING);
+
+    g_object_class_install_property(objclass,
+                                    PROP_AUTO_GET_lYRIC,
+                                    g_param_spec_boolean("auto-get-lyric",
+                                                         "auto-get-lyric",
+                                                         "auto-get-lyric",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
+                            
+
+    g_object_class_install_property(objclass,
+                                    PROP_AUTO_CLOSE_DOWNLOAD_WINDOW,
+                                    g_param_spec_boolean("auto-close-download-window",
+                                                         "auto-close-download-window",
+                                                         "auto-close-download-window",
+                                                         TRUE,
+                                                         G_PARAM_CONSTRUCT| 
+                                                         G_PARAM_READWRITE));
 
 	g_type_class_add_private (objclass, sizeof (LyricSearchPrivate));
 }
@@ -236,7 +281,7 @@ lyric_search_set_status(LyricSearch *lys,LyricSearchStatus lss)
 		default:
 		break;
 	}
-    g_warning("status_changed:%d",lss);
+//    g_warning("status_changed:%d",lss);
     g_signal_emit(lys,LYRIC_SEARCH_SIGNALS[STATUS_CHANGED],0);
 }
 
@@ -306,6 +351,12 @@ lyric_search_constructor(GType type,
 
 	gtk_window_set_focus(GTK_WINDOW(lys->mainwin),lys->search_button);
 
+    lys->priv->auto_get_lyric = GTK_WIDGET(gtk_builder_get_object(build,"auto_get_lyric"));
+    lys->priv->close_after_download = GTK_WIDGET(gtk_builder_get_object(build,"close_after_download"));
+
+    g_signal_connect(lys->priv->auto_get_lyric,"toggled",G_CALLBACK(on_toggl_button_toggled),lys);
+    g_signal_connect(lys->priv->close_after_download,"toggled",G_CALLBACK(on_toggl_button_toggled),lys);
+
 	g_signal_connect(lys->search_button,"clicked",G_CALLBACK(lyric_search_search_button_clicked),lys);
 	g_signal_connect(lys->download_button,"clicked",G_CALLBACK(lyric_search_download_button_clicked),lys);
 	g_signal_connect(lys->close_button,"clicked",G_CALLBACK(lyric_search_close_button_clicked),lys);
@@ -368,6 +419,83 @@ lyric_search_finalize(GObject *object)
 		g_free(lys->default_engine);
 
 	G_OBJECT_CLASS(lyric_search_parent_class)->finalize(object);
+}
+
+
+static void
+lyric_search_set_property(GObject        *object,
+                guint               property_id,
+                const GValue        *value,
+                GParamSpec          *pspec)
+{
+    LyricSearch *lys;
+    lys = LYRIC_SEARCH(object);
+    switch(property_id)
+    {
+        case PROP_AUTO_GET_lYRIC:
+        {
+            gboolean v = g_value_get_boolean(value);
+            if(lys->priv->auto_get_lyric_mode != v)
+            {
+                lys->priv->auto_get_lyric_mode = v;
+                g_object_notify(object,"auto-get-lyric");
+            }
+            if(lys->priv->auto_get_lyric)
+            {
+                if(v != 
+                    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(lys->priv->auto_get_lyric)))
+                {
+                    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(lys->priv->auto_get_lyric),
+                                                v);
+                }
+            }
+        }
+        break;
+        case PROP_AUTO_CLOSE_DOWNLOAD_WINDOW:
+        {
+            gboolean v = g_value_get_boolean(value);
+            if(lys->priv->auto_close_download_window != v)
+            {
+                lys->priv->auto_close_download_window = v;
+                g_object_notify(object,"auto-close-download-window");
+            }
+            if(lys->priv->close_after_download)
+            {
+                if(v != 
+                    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(lys->priv->close_after_download)))
+                {
+                    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(lys->priv->close_after_download),
+                                                v);
+                }
+            }
+        }
+        break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+        break;
+    }
+}
+
+static void
+lyric_search_get_property(GObject        *object,
+                guint               property_id,
+                GValue        *value,
+                GParamSpec          *pspec)
+{
+    LyricSearch *lys;
+    lys = LYRIC_SEARCH(object);
+    switch(property_id)
+    {
+        case PROP_AUTO_GET_lYRIC:
+            g_value_set_boolean(value,lys->priv->auto_get_lyric_mode);
+        break;
+        case PROP_AUTO_CLOSE_DOWNLOAD_WINDOW:
+            g_value_set_boolean(value,lys->priv->auto_close_download_window);
+        break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+        break;
+    }
 }
 
 gboolean
@@ -697,12 +825,15 @@ lyric_search_start_search_lyircid(LyricSearch *lys,LyricId *id)
 	if(id == NULL){
 		id = &orig_id;
 	}
-	gchar *engine_uri;
-	lyric_down_loader_cancel(lys->priv->downloader);
-	engine_uri = lys->engine->get_engine_uri(id);
-	lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SEARCHING);
-	lyric_down_loader_load(lys->priv->downloader,engine_uri);
-	g_free(engine_uri);
+    if((id->artist &&id->artist[0]) || (id->title&&id->title[0]))
+    {
+        gchar *engine_uri;
+        lyric_down_loader_cancel(lys->priv->downloader);
+        engine_uri = lys->engine->get_engine_uri(id);
+        lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SEARCHING);
+        lyric_down_loader_load(lys->priv->downloader,engine_uri);
+        g_free(engine_uri);
+    }
 }
 
 static GSList*
@@ -719,7 +850,6 @@ lyric_search_search_result_parser(LyricSearch *lys,const gchar *data)
 static void
 lyric_search_auto_get_lyric(LyricSearch *lys)
 {
-	gboolean ret_bl = TRUE;
 
 	lys->priv->type = LYRIC_AUTO_SEARCH;
 	lyric_down_loader_cancel(lys->priv->downloader);
@@ -749,6 +879,17 @@ lyric_search_present_dialog(LyricSearch *lys,gboolean   download_sensitive)
 	gtk_entry_set_text(lys->title_entry,lys->title?lys->title:"");
 	gtk_entry_set_text(lys->lyric_entry,lys->lyricfile_w);
 	gtk_widget_set_sensitive(GTK_WIDGET(lys->download_button),download_sensitive);
+
+    if(lys->priv->auto_get_lyric)
+    {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(lys->priv->auto_get_lyric),lys->priv->auto_get_lyric_mode);
+    }
+
+    if(lys->priv->close_after_download)
+    {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(lys->priv->close_after_download),
+                                        lys->priv->auto_close_download_window);
+    }
 
 	gtk_window_present(lys->mainwin);
 }
@@ -908,6 +1049,18 @@ lyric_search_widget_delete_event(GtkWidget *widget,GdkEvent  *event,LyricSearch 
 	return TRUE;
 }
 
+static void
+on_toggl_button_toggled(GtkToggleButton *button,LyricSearch *lys)
+{
+    gboolean    active = gtk_toggle_button_get_active(button);
+    if(button == lys->priv->auto_get_lyric)
+    {
+        g_object_set(lys,"auto-get-lyric",active,NULL);
+    }else if(button == lys->priv->close_after_download)
+    {
+        g_object_set(lys,"auto-close-download-window",active,NULL);
+    }
+}
 
 static void
 lyric_search_engine_box_change(GtkComboBox *engine_box,LyricSearch *lys)
@@ -1007,10 +1160,12 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 			}
 			lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SEARCHING_GET_DATA);
 			GSList *l = lyric_search_search_result_parser(lys,data->str);
-			lyric_func_lyricid_list(l);
+///			lyric_func_lyricid_list(l);
             if(!lys->priv->auto_get_lyric_mode && lys->priv->type == LYRIC_AUTO_SEARCH)
             {
                 lys->priv->type = LYRIC_MANUAL_SEARCH;
+                if(l)
+                    lyric_search_present_dialog(lys,FALSE);
             }
 			switch(lys->priv->type){
 				case LYRIC_AUTO_SEARCH:
@@ -1024,13 +1179,12 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 				case LYRIC_MANUAL_SEARCH:
 					if(l){
 						lyric_search_lyricview_update(lys,l);
-                        lyric_search_present_dialog(lys,FALSE);
 					}else{
 						lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SEARCHING_FAILED);
 					}
 				break;
 				default:
-					g_warning("%s:should not come to this type ...",__FUNCTION__);
+					///g_warning("%s:should not come to this type ...",__FUNCTION__);
 				break;
 			}
 			lyric_func_free_lyricid_list(l);
@@ -1045,12 +1199,16 @@ on_downloader_done(LyricDownloader *ldl,const GString *data,LyricSearch *lys)
 				g_free(lys->lyricfile);
 				lys->lyricfile = g_strdup(lys->lyricfile_w);
 				lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_LYRIC_UPDATED);
+                if(lys->priv->auto_close_download_window)
+                {
+                    gtk_widget_hide(lys->mainwin);
+                }
 			}else{
 				lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_SAVEING_DATA_FAILED);
 			}
 		break;
 		default:
-			g_warning("%s:should not come to this status(%d):%s ...",__FUNCTION__,lss,data?data->str:"");
+			///g_warning("%s:should not come to this status(%d):%s ...",__FUNCTION__,lss,data?data->str:"");
 		break;
 	}
 }
@@ -1059,7 +1217,7 @@ gboolean
 lyric_search_manual_get_lyric(LyricSearch *lys)
 {
 	lys->priv->type = LYRIC_MANUAL_SEARCH;
-	lyric_down_loader_cancel(lys->priv->downloader);
+	lyric_search_reset_downloader(lys);
 	if(!lys->mainwin || !GTK_IS_WINDOW(lys->mainwin)){
 		GtkDialog *msg;
 		msg = GTK_DIALOG(gtk_message_dialog_new(NULL,
@@ -1072,6 +1230,7 @@ lyric_search_manual_get_lyric(LyricSearch *lys)
 		return FALSE;
 	}
     lyric_search_lyricview_update(lys,NULL);
+    lyric_search_start_search_lyircid(lys,NULL);
     lyric_search_present_dialog(lys,FALSE);
 	return TRUE;
 }
