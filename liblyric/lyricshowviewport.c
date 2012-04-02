@@ -641,7 +641,7 @@ lyric_show_viewport_update_current_widget(LyricShowViewport *lsv)
         gtk_widget_get_allocation(lsv->priv->current_widget,&alc0);
         gtk_widget_get_allocation(lsv->priv->lyricbox,&alc1);
         lsv->priv->pos = (alc0.y - alc1.y)+alc0.height/2.0;
-        gtk_widget_queue_resize(lsv->priv->current_widget);
+        gtk_widget_queue_resize(GTK_WIDGET(lsv));
     }
 }
 

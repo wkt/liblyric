@@ -225,15 +225,18 @@ metadata_updated(TotemObject *totem,
     SET_INFO(title)
     else{
         gchar *t = totem_get_short_title(totem);
-        gint len = strlen(t);
-        gint i = 0;
-        for(i=len-1;i > 0 && i>len -6;i --)
+        if(t)
         {
-            if(t[i] == '.')
-                t[i] = 0;
+            gint len = strlen(t);
+            gint i = 0;
+            for(i=len-1;i > 0 && i>len -6;i --)
+            {
+                if(t[i] == '.')
+                    t[i] = 0;
+            }
+            lyric_search_set_title(pi->priv->lys,t);
+            g_free(t);
         }
-        lyric_search_set_title(pi->priv->lys,t);
-        g_free(t);
     }
     SET_INFO(album)
     lyric_search_find_lyric(pi->priv->lys);
