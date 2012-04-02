@@ -526,7 +526,7 @@ lyric_show_viewport_button_release(GtkWidget    *widget,GdkEventButton *event)
     if(is_pressed && lsv->priv->time_requestable)
     {
         t = lyric_show_viewport_get_requested_time(lsv);
-        lsv->priv->pos += lsv->priv->pressed_pos ;
+///        lsv->priv->pos += lsv->priv->pressed_pos ;
         lsv->priv->pressed_pos = 0;
 
         lyric_show_viewport_update_cursor(lsv);
@@ -604,7 +604,7 @@ lyric_show_viewport_update_cursor(LyricShowViewport *lsv)
 static void
 lyric_show_viewport_update_current_widget(LyricShowViewport *lsv)
 {
-    if((!lsv->priv->is_pressed || !lsv->priv->time_requestable) && lsv->priv->current_widget)
+    if((!lsv->priv->is_pressed) && lsv->priv->current_widget)
     {
         GtkAllocation alc0,alc1;
         const gchar *color_string = "blue";
@@ -653,6 +653,7 @@ lyric_show_viewport_sync_time_line_widget(LyricShowViewport *lsv)
     GtkWidget  *pre_llw = NULL;
     gint64 pre_time = 0;
     gint64 line_time = 0;
+
     list = gtk_container_get_children(GTK_CONTAINER(lsv->priv->lyricbox));
     for(l=list;l;l=l->next)
     {
@@ -660,7 +661,6 @@ lyric_show_viewport_sync_time_line_widget(LyricShowViewport *lsv)
         line_time = lyric_line_widget_get_time(llw);
         if(lsv->priv->current_time <line_time)
         {
-            ///g_warning("line_ime:%lu,current_time:%lu",line_time,lsv->priv->current_time);
             break;
         }
         pre_time = line_time;

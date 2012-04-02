@@ -227,7 +227,8 @@
             </child>
             <child>
               <object class="GtkScrolledWindow" id="scrolledwindow1">
-                <property name="height_request">120</property>
+                <property name="width_request">360</property>
+                <property name="height_request">168</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hscrollbar_policy">never</property>

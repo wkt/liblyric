@@ -77,5 +77,5 @@ noinst_PROGRAMS =
 endif
 
 lyric_show_viewport_SOURCES = $(liblyric_la_SOURCES)
-lyric_show_viewport_CFLAGS = $(liblyric_la_CFLAGS) -Don_lyric_show_viewport $(GTK2_CFLAGS)
-lyric_show_viewport_LDFLAGS = $(liblyric_la_LDFLAGS) $(GTK2_LIBS)
+lyric_show_viewport_CFLAGS = $(liblyric_la_CFLAGS) -Don_lyric_show_viewport $(GTK3_CFLAGS)
+lyric_show_viewport_LDFLAGS = $(liblyric_la_LDFLAGS) $(GTK3_LIBS)

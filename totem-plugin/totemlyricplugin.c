@@ -37,11 +37,14 @@
 struct _TotemLyricPluginPrivate
 {
     guint       timeout_id;
+    gint        meta_updated_count;
     LyricSearch *lys;
     LyricShow    *lsw;
     TotemObject *totem;
     GtkWidget *bvw;
 };
+
+#define MAX_META_UPDATES   (4)
 
 typedef struct _TotemLyricPluginPrivate TotemLyricPluginPrivate;
 
@@ -179,6 +182,7 @@ file_opened(TotemObject *totem,const gchar *mrl,TotemLyricPlugin *pi)
 {
     lyric_show_set_text(pi->priv->lsw,_("Lyric show"));
     lyric_search_set_mrl(pi->priv->lys,mrl);
+    pi->priv->meta_updated_count = 0;
 }
 
 static void
@@ -186,6 +190,7 @@ file_closed(TotemObject *totem,TotemLyricPlugin *pi)
 {
     lyric_search_set_info(pi->priv->lys,NULL,NULL,NULL);
     lyric_show_set_text(pi->priv->lsw,_("Lyric Show"));
+    pi->priv->meta_updated_count = 0;
     g_warning("file-closed");
 }
 
@@ -212,10 +217,21 @@ metadata_updated(TotemObject *totem,
 						 guint track_num,
                          TotemLyricPlugin *pi)
 {
+
+    if(pi->priv->meta_updated_count > MAX_META_UPDATES)
+        return ;
+    pi->priv->meta_updated_count ++;
     SET_INFO(artist)
     SET_INFO(title)
     else{
         gchar *t = totem_get_short_title(totem);
+        gint len = strlen(t);
+        gint i = 0;
+        for(i=len-1;i > 0 && i>len -6;i --)
+        {
+            if(t[i] == '.')
+                t[i] = 0;
+        }
         lyric_search_set_title(pi->priv->lys,t);
         g_free(t);
     }
@@ -257,6 +273,7 @@ time_request(LyricShow *lsw,gint64 t,TotemLyricPlugin *pi)
 {
     totem_action_seek_time(pi->priv->totem,t,FALSE);
     totem_action_play(pi->priv->totem);
+    lyric_show_set_time(pi->priv->lsw,(gint64)t);
 }
 
 static void
@@ -278,7 +295,6 @@ impl_activate_real(TotemLyricPlugin *pi, TotemObject *totem, GError **error)
 				"lyric",
 				_("Lyric Show"),
 				GTK_WIDGET(pi->priv->lsw));
-///	gtk_widget_set_sensitive (pi->priv->lsw, FALSE);
 
     g_signal_connect(totem,"file-opened",G_CALLBACK(file_opened),pi);
     g_signal_connect(totem,"file-closed",G_CALLBACK(file_closed),pi);
@@ -297,6 +313,7 @@ impl_activate_real(TotemLyricPlugin *pi, TotemObject *totem, GError **error)
         gchar *t = totem_get_current_mrl(totem);
         lyric_search_set_mrl(pi->priv->lys,t);
         g_free(t);
+        pi->priv->meta_updated_count = 3;
         g_signal_emit_by_name(pi->priv->bvw,"got-metadata");
     }
 
