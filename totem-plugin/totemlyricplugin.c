@@ -11,6 +11,7 @@
 #   include <config.h>
 #endif
 
+#include <time.h>
 #include <glib.h>
 
 #ifdef GETTEXT_PACKAGE
@@ -37,6 +38,7 @@
 struct _TotemLyricPluginPrivate
 {
     guint       timeout_id;
+    time_t      delay_time;
     gint        meta_updated_count;
     LyricSearch *lys;
     LyricShow    *lsw;
@@ -44,7 +46,8 @@ struct _TotemLyricPluginPrivate
     GtkWidget *bvw;
 };
 
-#define MAX_META_UPDATES   (4)
+#define MAX_META_UPDATES   (10)
+#define SEARCH_LYRIC_DELAY (1)
 
 typedef struct _TotemLyricPluginPrivate TotemLyricPluginPrivate;
 
@@ -183,6 +186,7 @@ file_opened(TotemObject *totem,const gchar *mrl,TotemLyricPlugin *pi)
     lyric_show_set_text(pi->priv->lsw,_("Lyric show"));
     lyric_search_set_mrl(pi->priv->lys,mrl);
     pi->priv->meta_updated_count = 0;
+    pi->priv->delay_time = 0;
 }
 
 static void
@@ -192,6 +196,7 @@ file_closed(TotemObject *totem,TotemLyricPlugin *pi)
     lyric_show_set_text(pi->priv->lsw,_("Lyric Show"));
     pi->priv->meta_updated_count = 0;
     g_warning("file-closed");
+    pi->priv->delay_time = 0;
 }
 
 #define SET_INFO(n) \
@@ -217,7 +222,6 @@ metadata_updated(TotemObject *totem,
 						 guint track_num,
                          TotemLyricPlugin *pi)
 {
-
     if(pi->priv->meta_updated_count > MAX_META_UPDATES)
         return ;
     pi->priv->meta_updated_count ++;
@@ -239,7 +243,7 @@ metadata_updated(TotemObject *totem,
         }
     }
     SET_INFO(album)
-    lyric_search_find_lyric(pi->priv->lys);
+    pi->priv->delay_time = time(NULL);
 }
 
 static void
@@ -254,6 +258,13 @@ seekable_notify(TotemObject *totem,
 static gboolean
 timeout_update(TotemLyricPlugin *pi)
 {
+    time_t tnow = time(NULL);
+    if(pi->priv->delay_time > 0 && pi->priv->delay_time + SEARCH_LYRIC_DELAY< tnow)
+    {
+        pi->priv->delay_time = 0;
+        lyric_search_find_lyric(pi->priv->lys);
+    }
+
     if(totem_is_playing(pi->priv->totem))
     {
         gint64 t = totem_get_current_time(pi->priv->totem);
@@ -262,6 +273,7 @@ timeout_update(TotemLyricPlugin *pi)
             lyric_show_set_time(pi->priv->lsw,(gint64)t);
         }
     }
+
     return TRUE;
 }
 
@@ -293,6 +305,7 @@ impl_activate_real(TotemLyricPlugin *pi, TotemObject *totem, GError **error)
     pi->priv->lsw = LYRIC_SHOW(lyric_show_viewport_new());
     pi->priv->bvw = totem_get_video_widget (pi->priv->totem);
     lyric_show_set_text(pi->priv->lsw,_("Lyric show"));
+    pi->priv->delay_time = 0;
 
 	totem_add_sidebar_page (totem,
 				"lyric",
@@ -309,14 +322,14 @@ impl_activate_real(TotemLyricPlugin *pi, TotemObject *totem, GError **error)
     g_signal_connect(pi->priv->lsw,"time-request",G_CALLBACK(time_request),pi);
     g_signal_connect(pi->priv->lsw,"search-request",G_CALLBACK(search_request),pi);
 
-    pi->priv->timeout_id = g_timeout_add(200,(GSourceFunc)timeout_update,pi);
+    pi->priv->timeout_id = g_timeout_add(333,(GSourceFunc)timeout_update,pi);
 
     if(totem_is_playing(totem) || totem_is_paused(totem))
     {
         gchar *t = totem_get_current_mrl(totem);
         lyric_search_set_mrl(pi->priv->lys,t);
         g_free(t);
-        pi->priv->meta_updated_count = 3;
+        pi->priv->meta_updated_count = MAX_META_UPDATES-1;
         g_signal_emit_by_name(pi->priv->bvw,"got-metadata");
     }
 

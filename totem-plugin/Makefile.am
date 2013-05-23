@@ -14,7 +14,13 @@ plugindir=$(PLUGINDIR)/totem-lyric
 plugin_in_files = totem-lyric.plugin.in
 plugin_DATA = $(plugin_in_files:.plugin.in=.plugin)
 
+if ENABLE_TOTEM_PLUGIN
+
 plugin_LTLIBRARIES = libtotem-lyric.la
+
+else
+plugin_LTLIBRARIES = 
+endif
 
 libtotem_lyric_la_SOURCES = totemlyricplugin.c
 libtotem_lyric_la_CFLAGS   = $(TOTEM_CFLAGS)

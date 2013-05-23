@@ -18,7 +18,7 @@
 #endif
 
 static const gchar *default_search_paths[]={"~/Lyric",".",NULL};
-static const gchar *default_lyric_format_array[]={"%a-%t","%n",NULL};
+static const gchar *default_lyric_format_array[]={"%a-%t","%n","%t",NULL};
 static const gchar *default_lyric_dir="~/Lyric";
 static const gchar *default_lyric_name_format = "%n";
 
@@ -670,8 +670,13 @@ lyric_search_fmt_string(LyricSearch *lys,const gchar *fmt)
 			str = g_string_append_c(str,*pt);
 		}
 	}
-	pt = str->str;
-	g_string_free(str,FALSE);
+    if(str->len > 0)
+    {
+        pt = str->str;
+        g_string_free(str,FALSE);
+    }else{
+        pt=NULL;
+    }
 	return pt;
 }
 
@@ -700,6 +705,10 @@ lyric_search_make_lyricfile(LyricSearch *lys)
         lyric_name = lyric_search_fmt_string(lys,lys->lyric_name_format);
     }else{
         lyric_name = lyric_search_fmt_string(lys,default_lyric_name_format);
+    }
+    if(lyric_name == NULL && lys->title)
+    {
+        lyric_name = g_strdup(lys->title);
     }
     lyricfile = g_strdup_printf("%s%c%s.lrc",lys->lyric_dir,G_DIR_SEPARATOR,lyric_name);
     if(g_file_test(lyricfile,G_FILE_TEST_EXISTS))
@@ -1240,7 +1249,7 @@ lyric_search_find_lyric(LyricSearch *lys)
 {
     lyric_search_make_lyricfile(lys);
     lys->priv->type = LYRIC_SEARCH_NONE;
-    lyric_search_show_info(lys);
+///    lyric_search_show_info(lys);
 	if(lyric_search_has_local_lyric(lys)){
 		lyric_search_set_status(lys,LYRIC_SEARCH_STATUS_LOCAL_LYRIC_YES);
 	}else{
