@@ -1,7 +1,7 @@
 SUBDIRS =           \
+        po \
         liblyric    \
         totem-plugin \
-        po \
         data \
         $(NULL)
 

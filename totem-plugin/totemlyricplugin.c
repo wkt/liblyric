@@ -193,9 +193,8 @@ static void
 file_closed(TotemObject *totem,TotemLyricPlugin *pi)
 {
     lyric_search_set_info(pi->priv->lys,NULL,NULL,NULL);
-    lyric_show_set_text(pi->priv->lsw,_("Lyric Show"));
+    lyric_show_set_text(pi->priv->lsw,_("Lyric show"));
     pi->priv->meta_updated_count = 0;
-    g_warning("file-closed");
     pi->priv->delay_time = 0;
 }
 
@@ -309,7 +308,7 @@ impl_activate_real(TotemLyricPlugin *pi, TotemObject *totem, GError **error)
 
 	totem_add_sidebar_page (totem,
 				"lyric",
-				_("Lyric Show"),
+				_("Lyric show"),
 				GTK_WIDGET(pi->priv->lsw));
 
     g_signal_connect(totem,"file-opened",G_CALLBACK(file_opened),pi);

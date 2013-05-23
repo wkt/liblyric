@@ -6,3 +6,8 @@ liblyric/LyricShowTreeView.c
 liblyric/LyricSogouSearch.c
 liblyric/LyricTtSearch.c
 data/download.glade
+liblyric/LyricDownloader.c
+liblyric/lyricshowmenu.c
+liblyric/lyricshowviewport.c
+totem-plugin/totemlyricplugin.c
+totem-plugin/totem-lyric.plugin.in

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-04-01 23:48+0800\n"
+"POT-Creation-Date: 2013-05-23 17:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,19 +17,19 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../liblyric/LyricSearch.c:996
+#: ../liblyric/LyricSearch.c:1005
 msgid "ID"
 msgstr ""
 
-#: ../liblyric/LyricSearch.c:1003
+#: ../liblyric/LyricSearch.c:1012
 msgid "Artist"
 msgstr "艺术家"
 
-#: ../liblyric/LyricSearch.c:1010
+#: ../liblyric/LyricSearch.c:1019
 msgid "Title"
 msgstr "标题"
 
-#: ../liblyric/LyricSearch.c:1226
+#: ../liblyric/LyricSearch.c:1236
 msgid "Can't get a window"
 msgstr "无法取得窗口"
 
@@ -45,17 +45,17 @@ msgstr ""
 msgid "SeeSee"
 msgstr "看看"
 
-#: ../liblyric/LyricShowTreeView.c:192
+#: ../liblyric/LyricShowTreeView.c:192 ../liblyric/lyricshowviewport.c:762
 #, c-format
 msgid "Title:%s"
 msgstr "标题：%s"
 
-#: ../liblyric/LyricShowTreeView.c:202
+#: ../liblyric/LyricShowTreeView.c:202 ../liblyric/lyricshowviewport.c:770
 #, c-format
 msgid "Artist:%s"
 msgstr "艺术家：%s"
 
-#: ../liblyric/LyricShowTreeView.c:212
+#: ../liblyric/LyricShowTreeView.c:212 ../liblyric/lyricshowviewport.c:778
 #, c-format
 msgid "Album:%s"
 msgstr "专辑：%s"
@@ -108,6 +108,40 @@ msgstr "自动下载歌词"
 #: ../data/download.glade.h:9
 msgid "Automatically close after download lyric"
 msgstr "下载完成后自动关闭窗口"
+
+#: ../liblyric/LyricDownloader.c:179
+msgid "command terminated unormally"
+msgstr ""
+
+#. //name
+#. //STOCK ID
+#: ../liblyric/lyricshowmenu.c:43
+msgid "_About us"
+msgstr "关于(_A)"
+
+#. //label
+#. //accelerator
+#: ../liblyric/lyricshowmenu.c:45
+msgid "About us"
+msgstr "关于"
+
+#. //name
+#. //STOCK ID
+#. //label
+#. //accelerator
+#: ../liblyric/lyricshowmenu.c:50 ../liblyric/lyricshowmenu.c:52
+msgid "Search Lyric"
+msgstr "搜索歌词"
+
+#: ../totem-plugin/totemlyricplugin.c:186
+#: ../totem-plugin/totemlyricplugin.c:196
+#: ../totem-plugin/totemlyricplugin.c:306
+#: ../totem-plugin/totemlyricplugin.c:311
+msgid "Lyric show"
+msgstr "歌词秀"
+
+#~ msgid "Lyric Show"
+#~ msgstr "歌词秀"
 
 #~ msgid "<b>Can't find lyric</b>"
 #~ msgstr "<b>搜索不到歌词</b>"

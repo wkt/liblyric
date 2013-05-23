@@ -1,0 +1,9 @@
+build with totem plugin
+./autogen.sh --enable-totem-plugin
+make
+sudo make install
+
+build deb package
+./autogen.sh
+dpkg-buildpackage -b
+

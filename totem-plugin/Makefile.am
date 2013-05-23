@@ -14,6 +14,11 @@ plugindir=$(PLUGINDIR)/totem-lyric
 plugin_in_files = totem-lyric.plugin.in
 plugin_DATA = $(plugin_in_files:.plugin.in=.plugin)
 
+CLEANFILES = $(plugin_DATA)
+DISTCLEANFILES = $(plugin_DATA)
+EXTRA_DIST = $(plugin_in_files)
+
+
 if ENABLE_TOTEM_PLUGIN
 
 plugin_LTLIBRARIES = libtotem-lyric.la

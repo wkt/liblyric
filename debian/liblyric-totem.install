@@ -1,0 +1,5 @@
+usr/lib/lib*.so.*
+usr/lib/totem/plugins/totem-lyric/*.so
+usr/lib/totem/plugins/totem-lyric/*.plugin
+usr/share/locale/*
+usr/share/liblyric/*.glade
